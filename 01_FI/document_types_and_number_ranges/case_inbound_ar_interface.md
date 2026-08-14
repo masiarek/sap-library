@@ -1,6 +1,6 @@
 # Worked decision: numbering for an inbound AR interface
 
-**Level: 301 · for FI consultants and integration architects** — a real design question, argued through to a recommendation. Names and system IDs removed; the reasoning is unchanged.
+**Level: 301 · for FI consultants and integration architects** — a real design question for an **AR Lite** system, argued through to a recommendation. Names and system IDs removed; the reasoning is unchanged.
 
 **One line:** Reusing `DR` / `DG` for an interface is the cheap option that quietly costs you the ability to ever separate interface documents from manual ones — and the fix is authorization, not numbering.
 
@@ -17,9 +17,19 @@ A **legacy system** will post **customer accounting documents** into S/4 through
 
 Two concerns drive the discussion, and they are different in kind — which is why they need different remedies.
 
-### The architecture: AR without SD
+### The architecture: an AR Lite system
 
-Worth stating explicitly, because two of the arguments below turn on it. This is an **AR-only** pattern — S/4 runs the receivables subledger with **no SD functionality in scope**:
+Worth naming, because two of the arguments below turn on it, and because a landscape usually runs **both** patterns:
+
+| Pattern | What it is | Where invoices come from | Numbering consequence |
+| :-- | :-- | :-- | :-- |
+| **AR Full** | AR **with** SD | Billing documents in SD | FI document type `RV`, and the option of [SD = FI number identity](document_types_and_number_ranges.md) |
+| **AR Lite** | AR **without** SD | An upstream system, by interface | No `RV`, no billing document — the subject of this page |
+
+This design is **AR Lite**: S/4 runs the receivables subledger with no SD functionality in scope.
+
+> **This is also why range governance is a landscape problem rather than a system one.** An AR Full system numbers its `RV` documents from its own range; an AR Lite system needs different types and a different range entirely. Two patterns, coexisting, each with a legitimate claim on a range key — and nothing in SAP coordinating them. That is precisely the gap the earlier incident fell through.
+
 
 ```
 Legacy system                    S/4
@@ -32,8 +42,8 @@ Legacy system                    S/4
 
 Three consequences follow, and each one changes a decision:
 
-1. **There is no SD document flow to fall back on.** In an SD-backed flow the accounting document is tied to a billing document, so even with independent numbering you can always navigate between them. Here there is no `VBRK`, no *Accounting* button, no document flow. **The only link back to the source is the one you deliberately put there** — which makes the mandatory reference field a requirement rather than good practice. The posting API also exposes a reference key (`AWTYP` / `AWKEY`), so the source key can be carried in both places; do that.
-2. **The legal invoice number is the legacy system's number.** The invoice the customer receives is raised and issued by the legacy system. That number is what appears on the paper, in the customer's own system, on their remittance advice, and in every query they raise. See §Decision C — it is the strongest *business* argument for external assignment, and it is specific to this pattern.
+1. **There is no SD document flow to fall back on.** In an AR Full flow the accounting document is tied to a billing document, so even with independent numbering you can always navigate between them. Here there is no `VBRK`, no *Accounting* button, no document flow. **The only link back to the source is the one you deliberately put there** — which makes the mandatory reference field a requirement rather than good practice. The posting API also exposes a reference key (`AWTYP` / `AWKEY`), so the source key can be carried in both places; do that.
+2. **The legal invoice number is the legacy system's number.** The invoice the customer receives is raised and issued by the legacy system. That number is what appears on the paper, in the customer's own system, on their remittance advice, and in every query they raise. See §Decision C — it is the strongest *business* argument for external assignment, and it is specific to AR Lite.
 3. **S/4 owns the whole downstream lifecycle.** Payments, clearing, residuals, reversals and dunning all happen here. The interface's document types cover **incoming invoices and credit memos only**; clearing and reversal documents draw from their own types and ranges, which must be planned alongside — see the configuration table.
 
 Given point 3, the interface documents must arrive as **complete AR items** — payment terms, baseline date, dunning data — because S/4, not the legacy system, runs collection from that point on. That is outside numbering, but it fails in the same go-live week.
@@ -100,7 +110,7 @@ Under internal assignment that protection has to be **built**: store the source 
 
 So the trade is: **external gives idempotency for free and hands you the numbering obligations; internal keeps SAP's numbering guarantees and hands you the idempotency build.**
 
-### The argument specific to this pattern
+### The argument specific to AR Lite
 
 Because the legacy system issues the invoice, **its number is the one the customer knows.** With external assignment the S/4 AR document carries that same number, and the payoff is operational rather than architectural:
 
@@ -109,7 +119,7 @@ Because the legacy system issues the invoice, **its number is the one the custom
 - **Cash application** matches a remittance advice that cites the legacy invoice number against a document carrying it.
 - **Support** stops needing to know that two numbering worlds exist.
 
-With internal assignment all of these still work, but each one goes through `XBLNR` — a lookup that every report, every integration and every new joiner has to know about. That is a small tax charged continuously rather than a one-time cost, and in an AR-only pattern it is charged on the busiest process in the subledger.
+With internal assignment all of these still work, but each one goes through `XBLNR` — a lookup that every report, every integration and every new joiner has to know about. That is a small tax charged continuously rather than a one-time cost, and in an AR Lite system it is charged on the busiest process in the subledger.
 
 | | External | Internal |
 | :-- | :-- | :-- |

@@ -70,3 +70,10 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | **Idempotency (posting)** | The property that re-sending the same source document cannot create a second accounting document. Under external assignment the database key enforces it; under internal assignment it must be built. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |
 | **Document type authorization group** | The field on `T003` that makes a document type impossible to post manually. The only control for "nothing stops users doing this later" that doesn't rely on convention. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |
 | **Number range register** | A landscape-wide record of range keys, their owning process, assignment mode and intervals. Since intervals live in each system's own `NRIV`, this — not configuration — is what reserves a key across systems. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |
+
+## AR patterns
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| **AR Full** | A system running receivables **with** SD. Invoices are billing documents, the FI document type is `RV`, and SD = FI number identity is available. | [Document types and number ranges, Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| **AR Lite** | A system running receivables **without** SD. Invoices originate upstream and arrive by interface; there is no billing document, no `RV`, and no document flow — so the source key must be carried deliberately. | [Worked decision: inbound AR interface](01_FI/document_types_and_number_ranges/case_inbound_ar_interface.md) |
