@@ -74,17 +74,23 @@ The design reduces to three, and they are **independent** — answering one does
 
 ## The options, side by side
 
-Seven combinations are worth stating. `Z1` / `Z2` stand for custom types; the range key is illustrative.
+Seven combinations are worth stating. `Y1` / `Y2` stand for the custom types; the range key is illustrative. On the choice of letter, see the note under the table.
 
 | | Document types | Range(s) | Assignment | Viable? |
 | :-- | :-- | :-- | :-- | :-- |
 | **A** | Standard `DR` + `DG` | Existing | Internal | Yes — the do-nothing option |
 | **B** | Standard `DR` + `DG` | Existing | External | **No** — see below |
-| **C** | One custom `Z1` | One | Internal | Yes |
-| **D** | One custom `Z1` | One | External | Yes |
-| **E** | Two custom `Z1` + `Z2` | One shared | Internal | Yes |
-| **F** | Two custom `Z1` + `Z2` | One shared | External | Yes — **recommended** |
-| **G** | Two custom `Z1` + `Z2` | Two | External | Yes — required if the legacy sequences are independent |
+| **C** | One custom `Y1` | One | Internal | Yes |
+| **D** | One custom `Y1` | One | External | Yes |
+| **E** | Two custom `Y1` + `Y2` | One shared | Internal | Yes |
+| **F** | Two custom `Y1` + `Y2` | One shared | External | Yes — **recommended** |
+| **G** | Two custom `Y1` + `Y2` | Two | External | Yes — required if the legacy sequences are independent |
+
+> **Why `Y*` rather than `Z*`.** Both are customer namespace, but the `Z*` document-type space is **not empty in standard SAP** — the payment program's own types live there (`ZP` for the payment posting, `ZV` for payment clearing, and others depending on the release). Document types are one of the few places where the reflex "custom means `Z`" runs into SAP's own objects, so `Y*` starts from a cleaner space.
+>
+> Check `T003` in your own system before fixing on any code — what is occupied varies by release and by what previous projects have already created.
+>
+> **And consider a mnemonic pair over `Y1` / `Y2`.** The two characters are what users read in `FBL5N` forever. The standard pair is readable to anyone who knows it — `DR` and `DG` are *Debitor Rechnung* and *Debitor Gutschrift* — so a custom pair echoing that shape (invoice and credit memo distinguishable at a glance) will age better than two codes that have to be memorised.
 
 ### How they compare
 
