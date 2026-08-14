@@ -23,12 +23,14 @@ Worth naming, because two of the arguments below turn on it, and because a lands
 
 | Pattern | What it is | Where invoices come from | Numbering consequence |
 | :-- | :-- | :-- | :-- |
-| **AR Full** | AR **with** SD | Billing documents in SD | FI document type `RV`, and the option of [SD = FI number identity](document_types_and_number_ranges.md) |
-| **AR Lite** | AR **without** SD | An upstream system, by interface | No `RV`, no billing document — the subject of this page |
+| **AR Full** — *several systems* | AR **with** SD | Billing documents in SD | FI document type `RV`, and the option of [SD = FI number identity](document_types_and_number_ranges.md) |
+| **AR Lite** — *one, central* | AR **without** SD | An upstream legacy system, by interface | No `RV`, no billing document — the subject of this page |
 
-This design is **AR Lite**: S/4 runs the receivables subledger with no SD functionality in scope.
+This design is the **AR Lite** system: one central S/4 receivables subledger, fed by interface, with no SD functionality in scope.
 
-> **This is also why range governance is a landscape problem rather than a system one.** An AR Full system numbers its `RV` documents from its own range; an AR Lite system needs different types and a different range entirely. Two patterns, coexisting, each with a legitimate claim on a range key — and nothing in SAP coordinating them. That is precisely the gap the earlier incident fell through.
+> **The asymmetry is the whole governance problem.** Several AR Full systems each number their `RV` documents from their own ranges, in their own `NRIV`, with their own histories. The AR Lite system is one central book that must coexist with all of them. Its range therefore has to be distinct from **every** AR Full system's — and nothing in SAP checks that, because no system can see another's intervals.
+>
+> This is the constraint the design is solving, and it is why the range choice is being made deliberately rather than inherited.
 
 
 ```
@@ -56,9 +58,11 @@ Note the shape of this concern: it is not that something is wrong now. It is tha
 
 ### Concern 2 — uncoordinated range reuse across systems
 
-This landscape has already been bitten. `RV` documents were adopted in a second system without coordination, and the legacy shows in the current state: **one system on range `18` (internal), another on `1P` (external)**. The resulting sensitivity to managed control over number ranges is well founded.
+This landscape has already been bitten. `RV` documents were adopted in a second system without coordination, and the inconsistency persists in the AR Full estate today: **one system on range `18` (internal), another on `1P` (external)**.
 
-A third option was therefore proposed: a dedicated range **`1C`, external** — the sending system supplies the numbers and SAP rejects duplicates, rather than SAP assigning numbers internally.
+**That history is accepted, not in scope to remediate.** Rewriting numbering in live AR Full systems would cost more than the inconsistency does. Its relevance here is forward-looking: it is the reason the *new central* system's range is being chosen deliberately, distinct from anything the AR Full systems use, rather than picked from whatever looked free.
+
+Hence the proposal of a dedicated range **`1C`, external** — the legacy system supplies the numbers and SAP rejects duplicates, rather than SAP assigning them internally.
 
 ---
 
@@ -149,7 +153,9 @@ Being precise here matters, because the proposed control is being asked to carry
 | A second source interleaving silently into the range | **Converted to an immediate hard error** by external assignment |
 | Another team adopting the same key **in another system** | **No.** Intervals live in each system's own `NRIV`. Nothing in SAP knows what another system is doing. |
 
-That third row is Concern 2 — the original incident — and **no configuration choice prevents a recurrence.** A range key is reserved only because a register says so and a change process checks it.
+That third row is Concern 2 — and **no configuration choice prevents a recurrence.** A range key is reserved only because a register says so and a change process checks it.
+
+The goal is not to repair the AR Full estate. It is to ensure the central system's key is recorded as taken, so the next interface or document type created anywhere in the landscape cannot quietly claim it.
 
 **So the proposal is incomplete without a governance item:** a landscape-wide register of number range keys — key, owning process, assignment mode, intervals, systems in use — consulted before any new document type or interface is created.
 

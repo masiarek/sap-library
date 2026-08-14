@@ -75,5 +75,5 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 
 | Term | Meaning | Worked through in |
 | :-- | :-- | :-- |
-| **AR Full** | A system running receivables **with** SD. Invoices are billing documents, the FI document type is `RV`, and SD = FI number identity is available. | [Document types and number ranges, Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
-| **AR Lite** | A system running receivables **without** SD. Invoices originate upstream and arrive by interface; there is no billing document, no `RV`, and no document flow — so the source key must be carried deliberately. | [Worked decision: inbound AR interface](01_FI/document_types_and_number_ranges/case_inbound_ar_interface.md) |
+| **AR Full** | A system running receivables **with** SD — typically several of them across a landscape. Invoices are billing documents, the FI document type is `RV`, and SD = FI number identity is available. | [Document types and number ranges, Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| **AR Lite** | One central system running receivables **without** SD. Invoices originate upstream and arrive by interface; there is no billing document, no `RV`, and no document flow — so the source key must be carried deliberately. | [Worked decision: inbound AR interface](01_FI/document_types_and_number_ranges/case_inbound_ar_interface.md) |
