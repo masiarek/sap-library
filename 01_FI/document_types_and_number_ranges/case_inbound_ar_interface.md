@@ -4,7 +4,7 @@
 
 **One line:** Reusing `DR` / `DG` for an interface is the cheap option that quietly costs you the ability to ever separate interface documents from manual ones — and the fix is authorization, not numbering.
 
-Framework behind this: [Numbering design for an inbound interface](inbound_interface_numbering.md). Mechanics: [Document types and number ranges](document_types_and_number_ranges.md).
+Framework behind this: [Numbering design for an inbound interface](inbound_interface_numbering.md). Mechanics: [Document types and number ranges](document_types_and_number_ranges.md). Downstream: [how the payment program treats these open items](../payments/f110_debit_vs_credit.md), since payments and clearing all happen in S/4.
 
 ---
 
@@ -16,6 +16,27 @@ A **legacy system** will post **customer accounting documents** into S/4 through
 - **Create one or two dedicated document types**, with a number range reserved for the interface and used nowhere else in the landscape.
 
 Two concerns drive the discussion, and they are different in kind — which is why they need different remedies.
+
+### The architecture: AR without SD
+
+Worth stating explicitly, because two of the arguments below turn on it. This is an **AR-only** pattern — S/4 runs the receivables subledger with **no SD functionality in scope**:
+
+```
+Legacy system                    S/4
+  invoices raised    ──────▶   AR open items          (this interface)
+  invoice issued                     │
+  to the customer                    ▼
+                                incoming payments,
+                                clearing, dunning     (all in S/4)
+```
+
+Three consequences follow, and each one changes a decision:
+
+1. **There is no SD document flow to fall back on.** In an SD-backed flow the accounting document is tied to a billing document, so even with independent numbering you can always navigate between them. Here there is no `VBRK`, no *Accounting* button, no document flow. **The only link back to the source is the one you deliberately put there** — which makes the mandatory reference field a requirement rather than good practice. The posting API also exposes a reference key (`AWTYP` / `AWKEY`), so the source key can be carried in both places; do that.
+2. **The legal invoice number is the legacy system's number.** The invoice the customer receives is raised and issued by the legacy system. That number is what appears on the paper, in the customer's own system, on their remittance advice, and in every query they raise. See §Decision C — it is the strongest *business* argument for external assignment, and it is specific to this pattern.
+3. **S/4 owns the whole downstream lifecycle.** Payments, clearing, residuals, reversals and dunning all happen here. The interface's document types cover **incoming invoices and credit memos only**; clearing and reversal documents draw from their own types and ranges, which must be planned alongside — see the configuration table.
+
+Given point 3, the interface documents must arrive as **complete AR items** — payment terms, baseline date, dunning data — because S/4, not the legacy system, runs collection from that point on. That is outside numbering, but it fails in the same go-live week.
 
 ### Concern 1 — manual postings, later
 
@@ -79,6 +100,17 @@ Under internal assignment that protection has to be **built**: store the source 
 
 So the trade is: **external gives idempotency for free and hands you the numbering obligations; internal keeps SAP's numbering guarantees and hands you the idempotency build.**
 
+### The argument specific to this pattern
+
+Because the legacy system issues the invoice, **its number is the one the customer knows.** With external assignment the S/4 AR document carries that same number, and the payoff is operational rather than architectural:
+
+- A **dunning notice** quotes a number the customer recognizes.
+- A **customer query** — "what is this charge?" — is answered by looking up the number they quoted, directly, with no mapping step.
+- **Cash application** matches a remittance advice that cites the legacy invoice number against a document carrying it.
+- **Support** stops needing to know that two numbering worlds exist.
+
+With internal assignment all of these still work, but each one goes through `XBLNR` — a lookup that every report, every integration and every new joiner has to know about. That is a small tax charged continuously rather than a one-time cost, and in an AR-only pattern it is charged on the busiest process in the subledger.
+
 | | External | Internal |
 | :-- | :-- | :-- |
 | Duplicate resend | **Impossible** — database-enforced | Possible unless the check is built correctly |
@@ -138,6 +170,8 @@ External assignment makes a breach *visible immediately* rather than months late
 | **Q4** | Which **company codes**, and could the list grow? | An interval is needed in each. |
 | **Q5** | Does any **gapless or annual-restart** expectation apply in those company codes? | External moves that obligation to the source system. See [Part 3 on European requirements](document_types_and_number_ranges.md). |
 | **Q6** | On rejection, does the source **correct and resend**, or is it a manual fix? | External has a harder failure mode; the path must be designed, not discovered in production. |
+| **Q7** | When the legacy system **cancels** an invoice, does it send a credit memo through the interface, or expect a reversal in S/4? | A credit memo arrives with an external number; a reversal draws from the reversal type's internal range. Different designs, and the two must not both be in play. |
+| **Q8** | Does the legacy number appear on the **customer-facing invoice**? | If yes, external assignment makes the S/4 document number match what the customer quotes — the business argument in Decision C. If no, that argument falls away and the decision rests on idempotency alone. |
 
 ## The recommendation in one paragraph
 
