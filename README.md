@@ -27,6 +27,7 @@ A three-page sequence, in reading order:
 ### Document types and number ranges
 
 - [Numbering design for an inbound interface](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) — when an external system posts accounting documents into SAP: dedicated document type or reuse, one type or two, internal or external assignment. Includes the two reframings that usually settle the argument — the sending system transmits its number under *either* mode, and database-rejected duplicates are the feature, not the drawback.
+- [Worked decision: numbering for an inbound AR interface](01_FI/document_types_and_number_ranges/case_inbound_ar_interface.md) — the framework argued through to a recommendation on a real question: a legacy system posting customer documents into S/4, in a landscape already burnt once by an uncoordinated range reuse. Anonymized.
 - [Document types and number ranges](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) — what a document type governs versus what its number range does; how intervals resolve **per company code and per fiscal year**; the SD-FI interface and the `RV` document; and why a year-dependent FI range and an SD=FI number identity cannot both exist. Includes the distinction that saves the most wasted effort: European numbering statutes almost always name the *invoice* number, which is SD's, not the FI accounting document number.
 
 ## How these pages are written

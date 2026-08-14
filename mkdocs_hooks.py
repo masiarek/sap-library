@@ -68,6 +68,7 @@ NAV_ORDER: dict[str, list[str]] = {
     "01_FI/document_types_and_number_ranges": [
         "document_types_and_number_ranges.md",
         "inbound_interface_numbering.md",
+        "case_inbound_ar_interface.md",
     ],
 }
 
