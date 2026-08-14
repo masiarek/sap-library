@@ -248,10 +248,39 @@ External assignment makes a breach *visible immediately* rather than months late
 | **Q2** | Does the source number invoices and credit memos on **one sequence** or two? | One → one range. Independent → two, or they collide in a shared interval. |
 | **Q3** | What is the source's **full numbering space** over the life of the interface? | The interval must cover it; extending later is a coordinated change. |
 | **Q4** | Which **company codes**, and could the list grow? | An interval is needed in each. |
-| **Q5** | Does any **gapless or annual-restart** expectation apply in those company codes? | External moves that obligation to the source system. See [Part 3 on European requirements](document_types_and_number_ranges.md). |
+| **Q5** | Does any **gapless or annual-restart** expectation apply in those company codes — now, or on the roadmap? | None in US/CA today. External moves the obligation to the legacy system, which is likely where it belongs anyway in AR Lite. See the Europe section above. |
 | **Q6** | On rejection, does the source **correct and resend**, or is it a manual fix? | External has a harder failure mode; the path must be designed, not discovered in production. |
 | **Q7** | When the legacy system **cancels** an invoice, does it send a credit memo through the interface, or expect a reversal in S/4? | A credit memo arrives with an external number; a reversal draws from the reversal type's internal range. Different designs, and the two must not both be in play. |
 | **Q8** | Does the legacy number appear on the **customer-facing invoice**? | If yes, external assignment makes the S/4 document number match what the customer quotes — the business argument in Decision C. If no, that argument falls away and the decision rests on idempotency alone. |
+
+## Today US and Canada; Europe later
+
+Current scope is **US and Canada only**, where nothing requires an annual restart — so the recommended interval is year-independent (`9999`), which is also what external assignment needs. Those two requirements agree today. They may not agree in a future European rollout, so the constraint is recorded here rather than rediscovered.
+
+### What could change
+
+Some European countries expect **year-dependent numbering** with an annual restart. A year-dependent interval is incompatible with the design above in two separate ways:
+
+- **Legacy numbers wouldn't fit.** The legacy sequence runs continuously across the year boundary; a restarting interval would reject it from the first January posting.
+- **The idempotency guarantee would develop a hole.** The duplicate key includes fiscal year, so the same legacy number could post again in a new year with no error — losing the exact protection external assignment was chosen for.
+
+### Why this does not threaten the US/CA design
+
+**Intervals are per company code.** A future European company code can take a different interval — and a different assignment mode — for the *same* document types. Adding Europe does not mean redesigning US and Canada, and does not require new document types; a separate type is warranted when the *behaviour* differs, not merely the numbering.
+
+So the likely future shape is one set of document types with mixed intervals: `9999` external for US/CA, something else for the European company codes.
+
+### The finding to expect when it happens
+
+Before assuming year-dependent FI ranges are required, establish **which number the statute names**. As [Part 3](document_types_and_number_ranges.md) sets out, European rules overwhelmingly address the **invoice number** — and in an AR Lite system the invoice is raised and issued by the **legacy system**, so that obligation most likely lands there, not on S/4's FI document numbering at all.
+
+The clear exception is France's **FEC**, which describes the accounting entries themselves and so does put FI numbering in scope.
+
+### What to do now, so the option stays open
+
+1. **Carry the legacy key in `XBLNR` and `AWKEY` on every document, regardless of assignment mode.** This is already recommended; the future rollout makes it load-bearing. If some company codes later run internal while US/CA run external, the reconciliation and support path stays uniform even though the numbering does not.
+2. **Do not hard-code the assumption that assignment mode is landscape-wide.** Interface error handling, reconciliation reports and runbooks should tolerate a company code whose FI number is *not* the legacy number.
+3. **Record the constraint against the range key** in the register, so whoever adds the first European company code meets this page rather than an interval that silently does not fit.
 
 ## The recommendation in one paragraph
 

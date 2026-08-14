@@ -110,6 +110,22 @@ If any gate fails, **internal plus a properly-built reference-key idempotency ch
 
 ---
 
+## Designing for countries you do not have yet
+
+An interface that starts in one country and later spreads is the normal case, and the numbering decision is the part most likely to have been made on assumptions that no longer hold.
+
+The trap: external assignment effectively requires a **year-independent** interval — both because a source sequence running across the year boundary will not fit a restarting one, and because the duplicate key includes fiscal year, so a year-dependent interval quietly lets the same source number post again next year. If a later country brings an **annual restart** requirement, that country cannot use the same arrangement.
+
+The relief: **intervals are per company code, and so is assignment mode.** A later company code can take a different interval for the *same* document types. Expanding scope does not mean redesigning the countries already live, and does not justify new document types — a separate type is warranted when the *behaviour* differs, not merely the numbering.
+
+Three things keep the option open at no cost:
+
+1. **Carry the source key in the reference field on every document, whatever the assignment mode.** If some company codes later run internal while others run external, the reconciliation and support path stays uniform even though the numbering does not.
+2. **Do not assume assignment mode is landscape-wide** in interface error handling, reports or runbooks.
+3. **Record the constraint against the range key** in the register, so whoever adds the first company code with different requirements finds it before defining an interval that silently will not fit.
+
+And before assuming a statutory requirement lands on FI numbering at all: establish **which number the rule names**. Where the source system issues the invoice, the legal invoice number is usually the source's, and the obligation goes with it.
+
 ## What configuration can and cannot prevent
 
 A landscape that has been burned by an uncoordinated document type reused across systems tends to reach for a technical control. It is worth being precise about which part of that risk configuration actually addresses:
