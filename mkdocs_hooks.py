@@ -57,7 +57,11 @@ FIXUPS = {
 NAV_ORDER: dict[str, list[str]] = {
     ".": ["01_FI"],
     "01_FI": ["payments"],
-    "01_FI/payments": ["f110_debit_vs_credit.md"],
+    "01_FI/payments": [
+        "f110_debit_vs_credit.md",
+        "intercompany_settlement_worked_example.md",
+        "intercompany_reconciliation_why_hard.md",
+    ],
 }
 
 

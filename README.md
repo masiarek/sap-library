@@ -18,7 +18,11 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 
 ### Recent pages
 
-- [How F110 knows a payment is debit or credit](01_FI/payments/f110_debit_vs_credit.md) — the sign is on the line item, not in the program; why a net debit vendor group is never paid, and why a payment run can't pull cash from an intercompany customer when vendor/customer clearing is off.
+**Payments, clearing and intercompany** — a three-page sequence, in reading order:
+
+1. [How F110 knows a payment is debit or credit](01_FI/payments/f110_debit_vs_credit.md) — the sign is stamped on the line item, not derived by the program; a payment line is always the mirror of the item it clears; and a net debit vendor group is never paid, whatever payment methods exist.
+2. [Intercompany settlement, worked end to end](01_FI/payments/intercompany_settlement_worked_example.md) — two company codes, four subledger accounts, one month of trade; gross vs netted vs central settlement; and the stranded balance that neither payment run can act on.
+3. [Why intercompany reconciliation is hard](01_FI/payments/intercompany_reconciliation_why_hard.md) — no common key, no single owner, currency, cash in transit, and the ten controls that actually reduce the pile.
 
 ## How these pages are written
 

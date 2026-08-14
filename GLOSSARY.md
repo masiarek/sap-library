@@ -33,3 +33,17 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | **Open item** | A posted line not yet cleared. Everything on this page's subject operates on these. | [F110 debit vs credit](01_FI/payments/f110_debit_vs_credit.md) |
 | **IC vendor / IC customer** | The mirrored subledger accounts two company codes carry to represent each other. | [F110 debit vs credit §6](01_FI/payments/f110_debit_vs_credit.md) |
 | **Payment proposal** | F110's dry run — the groups it intends to pay, plus an exception line per group it won't. The exception log is the primary evidence for "the job could not have done that". | [F110 debit vs credit §3](01_FI/payments/f110_debit_vs_credit.md) |
+
+## Intercompany
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| `BSEG-VBUND` | **Trading partner** — the company ID of the counterparty, defaulted from the customer/vendor master. What group consolidation uses to eliminate intercompany balances. Can be wrong while FI still reconciles. | [Why IC recon is hard §9](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+| `BKPF-BVORG` | Cross-company-code transaction number — links the two document numbers a cross-company posting creates. | [IC settlement, Model C](01_FI/payments/intercompany_settlement_worked_example.md) |
+| `BKPF-XBLNR` | Reference field. In intercompany, the practical place to carry the counterpart's document number — the key document-level matching depends on. | [Why IC recon is hard §3](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+| `BSEG-ZUONR` | Assignment. Populated by the sort key; the other candidate common key for automatic matching. | [Why IC recon is hard §3](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+| **IC vendor / IC customer** | The mirrored pair of subledger accounts each company code carries for a partner — payable and receivable sides kept separate. | [IC settlement, worked](01_FI/payments/intercompany_settlement_worked_example.md) |
+| **Gross / netted / central settlement** | The three models by which two company codes settle: each pays its own IC vendor; one nets AP against AR and pays the difference; or one pays on behalf of the other with no cash crossing at all. | [IC settlement, worked](01_FI/payments/intercompany_settlement_worked_example.md) |
+| **Cash in transit** | Payer has cleared, receiver has not — a structural, permanent reconciling category, not an exception. | [Why IC recon is hard §5](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+| **ICR / ICMR** | Intercompany reconciliation tooling — the ECC components (`FBICS3` → `FBICA3` → `FBICR3`) and S/4HANA's Intercompany Matching and Reconciliation. Verify what is activated in your own landscape. | [Why IC recon is hard](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+| **Residual item vs partial payment** | Clearing with a residual creates a *new* document, breaking the link to the counterpart; a partial payment leaves the original open. Prefer the latter on IC accounts. | [Why IC recon is hard §7](01_FI/payments/intercompany_reconciliation_why_hard.md) |

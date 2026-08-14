@@ -8,6 +8,39 @@ That single sentence answers the usual question. The rest of this page is the me
 
 ---
 
+## The decision in one pass
+
+Take the question literally — *will this payment post as a debit or a credit?* — and half of it answers itself.
+
+A payment document exists to **clear** an open item. Clearing means posting the opposite sign so the two net to zero. So the subledger line of a payment is **always** the mirror of the item it settles. That part is definitional, not a decision anyone or anything makes:
+
+| F110 is… | Subledger line | Bank line |
+| :-- | :-- | :-- |
+| Paying a vendor (open item is **credit**) | **Debit** the vendor | Credit bank — cash out |
+| Collecting from a customer (open item is **debit**) | **Credit** the customer | Debit bank — cash in |
+
+So the real question is not *which sign* but **which way the payment goes — or whether it goes at all.** F110 decides that from two independent inputs that must agree:
+
+1. **The net sign of the grouped open items** — data, stamped at posting time. Covered in §1–§3.
+2. **The direction the payment method is configured for** — outgoing or incoming. Covered in §4.
+
+All four combinations, which is the whole answer on one page:
+
+| Account | Net balance | With an **outgoing** method | With an **incoming** method |
+| :-- | :-- | :-- | :-- |
+| Vendor | Credit — *normal* | **Pays.** Dr vendor / Cr bank | — |
+| Vendor | Debit — *unusual* | **Nothing.** Exception in the proposal | **Nothing** |
+| Customer | Debit — *normal* | — | **Collects.** Cr customer / Dr bank |
+| Customer | Credit — *unusual* | **Pays** (a refund). Dr customer / Cr bank | **Nothing** |
+
+Two rows deserve a second look.
+
+**Row 2** is the one behind most intercompany questions: a vendor sitting in debit is never paid and never collected — it simply drops out of the run, whatever payment methods exist. There is no configuration that changes this.
+
+**Row 4** is the one people forget: a *customer* credit balance **can** be disbursed by F110, provided the customer master carries an **outgoing** payment method. That is the ordinary customer-refund path — and it is also the escape hatch when an intercompany obligation gets stranded on the receivable side, as worked through in [the intercompany example](intercompany_settlement_worked_example.md#when-the-balance-is-on-the-wrong-side).
+
+---
+
 ## 1. The sign lives on the line item, not in the program
 
 Every open item carries a debit/credit indicator in `BSEG-SHKZG`:
@@ -121,6 +154,11 @@ This is still not netting AP against AR, and it still cannot pay out a net debit
 | Payment method direction | `FBZP` → *Payment Methods in Country* → outgoing/incoming radio |
 | Netting is off | `XK03` / `FD03`, or `SE16N` on `LFB1-XVERR` and `KNB1-XVERR` |
 | Cross-company payments | `FBZP` → *Paying Company Codes*; clearing accounts in `OBYA` |
+
+## Where this goes next
+
+- [Intercompany settlement, worked end to end](intercompany_settlement_worked_example.md) — the same rules with numbers: four accounts, one month of trade, three settlement models, and what happens when the balance lands on the side no payment run can act on.
+- [Why intercompany reconciliation is hard](intercompany_reconciliation_why_hard.md) — the structural reasons the two sides drift, and the controls that reduce the pile.
 
 ## Provenance and caveats
 
