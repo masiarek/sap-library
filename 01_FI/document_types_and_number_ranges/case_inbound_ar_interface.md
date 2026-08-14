@@ -28,9 +28,7 @@ Worth naming, because two of the arguments below turn on it, and because a lands
 
 This design is the **AR Lite** system: one central S/4 receivables subledger, fed by interface, with no SD functionality in scope.
 
-> **The asymmetry is the whole governance problem.** Several AR Full systems each number their `RV` documents from their own ranges, in their own `NRIV`, with their own histories. The AR Lite system is one central book that must coexist with all of them. Its range therefore has to be distinct from **every** AR Full system's — and nothing in SAP checks that, because no system can see another's intervals.
->
-> This is the constraint the design is solving, and it is why the range choice is being made deliberately rather than inherited.
+> **Why the range is chosen deliberately.** Several AR Full systems each number their `RV` documents from their own ranges, held in their own `NRIV`. The AR Lite system is one central book that has to coexist with all of them, so its range must be distinct from every one of theirs — and nothing in SAP checks that, because no system can read another's intervals.
 
 
 ```
@@ -65,6 +63,72 @@ This landscape has already been bitten. `RV` documents were adopted in a second 
 Hence the proposal of a dedicated range **`1C`, external** — the legacy system supplies the numbers and SAP rejects duplicates, rather than SAP assigning them internally.
 
 ---
+
+## The three questions
+
+The design reduces to three, and they are **independent** — answering one does not answer the others:
+
+1. **Standard `DR` / `DG`, or custom document types?**
+2. **One document type, or two?**
+3. **Internal or external number assignment?**
+
+## The options, side by side
+
+Seven combinations are worth stating. `Z1` / `Z2` stand for custom types; the range key is illustrative.
+
+| | Document types | Range(s) | Assignment | Viable? |
+| :-- | :-- | :-- | :-- | :-- |
+| **A** | Standard `DR` + `DG` | Existing | Internal | Yes — the do-nothing option |
+| **B** | Standard `DR` + `DG` | Existing | External | **No** — see below |
+| **C** | One custom `Z1` | One | Internal | Yes |
+| **D** | One custom `Z1` | One | External | Yes |
+| **E** | Two custom `Z1` + `Z2` | One shared | Internal | Yes |
+| **F** | Two custom `Z1` + `Z2` | One shared | External | Yes — **recommended** |
+| **G** | Two custom `Z1` + `Z2` | Two | External | Yes — required if the legacy sequences are independent |
+
+### How they compare
+
+| Criterion | A | B | C | D | E | F | G |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Manual posting can be blocked | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Interface docs identifiable by `BLART` | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Invoice vs credit memo separable by type | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Duplicate resend impossible | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ |
+| FI number = legacy invoice number | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ |
+| Intervals to maintain per year | 0 | — | 1 | 1 | 1 | 1 | 2 |
+| New config objects | 0 | — | 1 | 1 | 2 | 2 | 2 |
+
+### Option by option
+
+**A — Standard `DR` / `DG`, internal.** *The do-nothing option.*
+**Pros:** no config, no new objects, familiar to everyone, existing report variants work unchanged.
+**Cons:** interface and manual documents become indistinguishable the day someone posts a manual `DR` — permanently and retrospectively. Manual posting cannot be blocked without also blocking it for everyone. No duplicate protection unless built. Legacy invoice number lives only in `XBLNR`.
+**Verdict:** cheapest today, and the only option that gets *worse* over time rather than staying flat.
+
+**B — Standard `DR` / `DG`, external.** *Listed to be eliminated.*
+**Why not:** switching `DR`'s range to external forces **every** manual `DR` posting to have its number keyed by hand, across the whole client. It solves nothing the interface needs and imposes a cost on unrelated processes. Not a real candidate.
+
+**C — One custom type, internal.**
+**Pros:** manual posting blockable; interface documents filterable by `BLART`; one interval; SAP keeps sequence and gap guarantees; no coupling to legacy number format.
+**Cons:** invoices and credit memos share one type, so separating them in reporting means reading the sign rather than filtering a field. Duplicate protection must be built, race-free. Two numbering worlds, joined through `XBLNR`.
+
+**D — One custom type, external.**
+**Pros:** all of C's separation benefits, plus database-enforced idempotency and the FI number matching the legacy invoice number.
+**Cons:** invoices and credit memos share a type *and* a range, so the legacy system must guarantee uniqueness across both. Inherits every external constraint — numeric ≤10 digits, `9999` interval, sequence obligation moves to the source.
+
+**E — Two custom types, one shared range, internal.**
+**Pros:** full separation — manual posting blocked, `BLART` filter, invoice vs credit memo distinguishable by type — with only one interval to administer. SAP keeps the numbering guarantees. No format coupling.
+**Cons:** duplicate protection is a build. Two numbering worlds. The strongest option if the external gate fails.
+
+**F — Two custom types, one shared range, external.** ← **recommended**
+**Pros:** everything in E, plus idempotency enforced by the primary key and the FI document number equal to the number the customer sees on the invoice. One interval despite two types, because `T003-NUMKR` need not differ between them.
+**Cons:** requires legacy numbers to be numeric and fit `BELNR`; requires a single legacy sequence across invoices and credit memos; sequence and gap obligations move to the legacy system; harder failure mode on rejection.
+
+**G — Two custom types, two ranges, external.**
+**Pros:** as F, but tolerates a legacy system that numbers invoices and credit memos on **independent** sequences.
+**Cons:** two intervals to create, protect and administer in every company code — double the year-end task and double the register entries. Choose only if forced by the answer to Q2.
+
+> **F and G are the same design.** The only thing that decides between them is whether the legacy system has one document sequence or two — a question about the *source*, not about SAP. Answer Q2 before defining any interval.
 
 ## Decision A — dedicated document types
 
@@ -191,7 +255,7 @@ External assignment makes a breach *visible immediately* rather than months late
 
 ## The recommendation in one paragraph
 
-Create **two dedicated document types** sharing one number range key, authorization-protected so they cannot be posted by hand, with `XBLNR` mandatory and carrying the source key. Use **external** assignment on a **year-independent** interval defined in every posting company code, with an internally-numbered reversal type. This closes the manual-posting concern by configuration rather than convention, and buys database-enforced protection against double-posting, which is the more serious exposure of the two. Confirm **Q1** first, since it is binary and can overturn the assignment mode — and add the key to a landscape-wide range register, because that register, not the configuration, is what actually prevents the next uncoordinated reuse.
+**Option F.** Create **two dedicated document types** sharing one number range key, authorization-protected so they cannot be posted by hand, with `XBLNR` mandatory and carrying the source key. Use **external** assignment on a **year-independent** interval defined in every posting company code, with an internally-numbered reversal type. This closes the manual-posting concern by configuration rather than convention, and buys database-enforced protection against double-posting, which is the more serious exposure of the two. Confirm **Q1** first, since it is binary and can overturn the assignment mode — and add the key to a landscape-wide range register, because that register, not the configuration, is what actually prevents the next uncoordinated reuse.
 
 ## Provenance and caveats
 

@@ -16,7 +16,7 @@ Almost every hard question here dissolves once those are separated:
 
 - The same document type can number continuously in one company code and restart annually in another — no second document type required. That is the multi-country escape hatch.
 - The document key is `BUKRS` + `BELNR` + `GJAHR`, so a repeated number in a new year is correct, not a collision.
-- SD number ranges (`RV_BELEG`) have **no** year dimension; FI ranges (`RF_BELEG`) always have one. That asymmetry is the source of the SD/FI numbering conflict, and it cannot be configured away.
+- SD number ranges (`RV_BELEG`) have **no** year dimension; FI ranges (`RF_BELEG`) always have one. That difference is the source of the SD/FI numbering conflict, and it cannot be configured away.
 
 ## And one thing to check before designing anything
 
