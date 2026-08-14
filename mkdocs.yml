@@ -33,9 +33,15 @@ use_directory_urls: false
 # The leading slash anchors the pattern to the repo root. Without it, .gitignore
 # semantics would match README.md at ANY depth and silently delete every folder's
 # section landing page from the site.
+# `/private/` holds client-internal notes. It is excluded here so the published
+# site can never serve it, and separately listed in .gitignore so it never leaves
+# this machine at all. Two independent guards on purpose: mkdocs does not read
+# .gitignore, and git does not read this file, so neither is a single point of
+# failure. Do not remove either one.
 exclude_docs: |
   /README.md
   __pycache__/
+  /private/
 
 # Built and linkable, but kept out of the sidebar: house conventions are for
 # someone about to write a page, not for a reader looking something up.

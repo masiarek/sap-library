@@ -8,3 +8,11 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Client-internal pages — NEVER committed and NEVER published.
+# Second, independent guard: `private/` is also in exclude_docs in mkdocs.yml,
+# so even an un-ignored copy would not reach the public site. Both are needed:
+# git decides what leaves this machine, mkdocs decides what the site serves,
+# and neither one reads the other's config. Removing either is a disclosure bug,
+# not a tidy-up.
+private/
