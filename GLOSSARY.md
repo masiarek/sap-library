@@ -62,3 +62,11 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | `RV` | The FI document type created from an SD billing document. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
 | `BKPF-AWTYP` / `AWKEY` | Reference transaction and key — the audit link from an FI document back to its originating document (`VBRK` for SD billing). The alternative to number identity. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
 | **FEC** | France's *Fichier des Écritures Comptables* — the audit file that puts **accounting entry** numbering in scope, unlike most European rules which address the invoice number. | [Part 3](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+
+## Interface numbering
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| **Idempotency (posting)** | The property that re-sending the same source document cannot create a second accounting document. Under external assignment the database key enforces it; under internal assignment it must be built. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |
+| **Document type authorization group** | The field on `T003` that makes a document type impossible to post manually. The only control for "nothing stops users doing this later" that doesn't rely on convention. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |
+| **Number range register** | A landscape-wide record of range keys, their owning process, assignment mode and intervals. Since intervals live in each system's own `NRIV`, this — not configuration — is what reserves a key across systems. | [Inbound interface numbering](01_FI/document_types_and_number_ranges/inbound_interface_numbering.md) |

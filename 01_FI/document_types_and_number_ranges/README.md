@@ -5,6 +5,7 @@ What a document type governs, how a number range interval is actually resolved, 
 | Page | What it answers |
 | :-- | :-- |
 | [Document types and number ranges](document_types_and_number_ranges.md) | The generic mechanics (`T003`, `OBA7`, `FBN1`, `RF_BELEG`), the SD-FI interface and the `RV` document, and why a year-dependent FI range and an SD=FI number identity cannot both exist. |
+| [Numbering design for an inbound interface](inbound_interface_numbering.md) | Applying it: reuse a standard document type or create a dedicated one, one type or two, internal or external assignment — and which part of a cross-system range collision configuration can actually prevent. |
 
 ## The one distinction to carry away
 

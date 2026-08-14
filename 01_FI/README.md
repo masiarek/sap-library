@@ -15,6 +15,7 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 | Page | What it answers |
 | :-- | :-- |
 | [Document types and number ranges](document_types_and_number_ranges/document_types_and_number_ranges.md) | What a document type governs, how intervals resolve per company code and year, the SD-FI `RV` document, and the collision between year-dependent FI ranges and SD number identity. |
+| [Numbering design for an inbound interface](document_types_and_number_ranges/inbound_interface_numbering.md) | Dedicated document type or reuse; one type or two; internal or external assignment — and why a range register, not configuration, is what prevents cross-system collisions. |
 
 ## Recurring themes across these pages
 
