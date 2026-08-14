@@ -1,0 +1,10 @@
+# MkDocs build output — generated, never committed.
+site/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

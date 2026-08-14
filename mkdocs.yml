@@ -1,0 +1,103 @@
+# MkDocs Material site for the whole repo — publishes every Markdown page as a
+# searchable website on GitHub Pages.
+#
+#   Local preview:  uv run --group docs mkdocs serve
+#                   (toolchain pinned in pyproject.toml [dependency-groups].docs + uv.lock)
+#   Deploy:         .github/workflows/docs.yml builds on every push to master
+#                   (one-time setup: repo Settings -> Pages -> Source: GitHub Actions)
+#
+# The docs root IS the repo root (mkdocs-same-dir), so there is no docs/ copy
+# step: the same Markdown GitHub renders is what the site serves.
+
+site_name: SAP Library
+site_description: Working notes on SAP FI — the mechanism behind the answer, with the tables, fields and transactions that let you verify it in your own system.
+site_url: https://masiarek.github.io/sap-library/
+repo_url: https://github.com/masiarek/sap-library
+repo_name: masiarek/sap-library
+edit_uri: edit/master/
+
+docs_dir: .
+site_dir: site
+
+# Cross-links are authored for GitHub's file-relative rendering (including links
+# to a folder's README.md). Plain .html pages keep those exact semantics; pretty
+# directory URLs would shift every page one level deeper and break them.
+use_directory_urls: false
+
+# MkDocs maps a README.md onto index.md, so the root README and index.md collide
+# ("Excluding README.md because it conflicts with index.md" — a --strict failure).
+# Excluding it is right rather than a workaround: its content already IS the
+# homepage, inlined by index.md through pymdownx.snippets, which reads from disk
+# and so is unaffected by this. GitHub still renders it as the repo front page.
+#
+# The leading slash anchors the pattern to the repo root. Without it, .gitignore
+# semantics would match README.md at ANY depth and silently delete every folder's
+# section landing page from the site.
+exclude_docs: |
+  /README.md
+  __pycache__/
+
+# Built and linkable, but kept out of the sidebar: house conventions are for
+# someone about to write a page, not for a reader looking something up.
+not_in_nav: |
+  /CONTRIBUTING.md
+
+theme:
+  name: material
+  icon:
+    logo: material/database-cog
+  features:
+    - navigation.indexes    # a folder's README.md becomes its section landing page
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+# Build-time fixes that would otherwise need a plugin (and a new pinned
+# dependency): sidebar section labels, which MkDocs derives from folder names.
+hooks:
+  - mkdocs_hooks.py
+
+plugins:
+  - search
+  - same-dir
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  # Lets index.md inline sections of README.md, so the repo front page and the
+  # site homepage share one source and cannot drift.
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/masiarek/sap-library

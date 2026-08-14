@@ -1,0 +1,20 @@
+[project]
+name = "sap-library"
+version = "0.1.0"
+description = "Working notes on SAP FI, published as a searchable site."
+requires-python = ">=3.11"
+dependencies = []
+
+# Not an installable package — just a place to pin the docs toolchain so CI and
+# the local preview resolve the exact same versions from uv.lock.
+[tool.uv]
+package = false
+
+[dependency-groups]
+# The MkDocs site build. To change a docs dependency, edit here and run `uv lock`.
+# mkdocs-same-dir is pinned exactly: it is the plugin that lets the docs root be
+# the repo root, and it is the one most likely to break the whole build silently.
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocs-same-dir==0.1.3",
+]

@@ -1,0 +1,35 @@
+# SAP Library
+
+<!-- --8<-- [start:hero] -->
+Working notes on SAP, written as pages rather than as chat history.
+
+The rule this library is built on: **an answer that only exists in a Teams thread gets asked again next quarter.** So when a question is worth answering properly — the mechanism, not just the verdict — it gets a page here, with the fields, tables and transactions that let the next person verify it themselves instead of taking anyone's word for it.
+
+Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
+<!-- --8<-- [end:hero] -->
+
+<!-- --8<-- [start:below-hero] -->
+
+## Start here
+
+| Area | What's in it |
+| :-- | :-- |
+| [01_FI — Financial Accounting](01_FI/README.md) | Payments, clearing, intercompany |
+
+### Recent pages
+
+- [How F110 knows a payment is debit or credit](01_FI/payments/f110_debit_vs_credit.md) — the sign is on the line item, not in the program; why a net debit vendor group is never paid, and why a payment run can't pull cash from an intercompany customer when vendor/customer clearing is off.
+
+## How these pages are written
+
+Four conventions, in priority order — the reasoning is in [CONTRIBUTING.md](CONTRIBUTING.md):
+
+1. **Mechanism over verdict.** "It won't do that" is worth little; "it can't, because the selection set never contains those items" is worth keeping.
+2. **Every claim gets a verification path** — the table, field, or transaction where the reader confirms it in their own system.
+3. **Provenance is stated.** A page written from experience says so; a page confirmed against a named system names the system and the date. The two are not the same evidence and are never presented as if they were.
+4. **No message numbers from memory.** Release-dependent text is read from the system, not quoted from a page.
+
+## Glossary
+
+Field names, abbreviations and the terms that mean something specific in FI: [GLOSSARY.md](GLOSSARY.md).
+<!-- --8<-- [end:below-hero] -->
