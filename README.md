@@ -14,15 +14,19 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 
 | Area | What's in it |
 | :-- | :-- |
-| [01_FI — Financial Accounting](01_FI/README.md) | Payments, clearing, intercompany |
+| [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges |
 
-### Recent pages
+### Payments, clearing and intercompany
 
-**Payments, clearing and intercompany** — a three-page sequence, in reading order:
+A three-page sequence, in reading order:
 
 1. [How F110 knows a payment is debit or credit](01_FI/payments/f110_debit_vs_credit.md) — the sign is stamped on the line item, not derived by the program; a payment line is always the mirror of the item it clears; and a net debit vendor group is never paid, whatever payment methods exist.
 2. [Intercompany settlement, worked end to end](01_FI/payments/intercompany_settlement_worked_example.md) — two company codes, four subledger accounts, one month of trade; gross vs netted vs central settlement; and the stranded balance that neither payment run can act on.
 3. [Why intercompany reconciliation is hard](01_FI/payments/intercompany_reconciliation_why_hard.md) — no common key, no single owner, currency, cash in transit, and the ten controls that actually reduce the pile.
+
+### Document types and number ranges
+
+- [Document types and number ranges](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) — what a document type governs versus what its number range does; how intervals resolve **per company code and per fiscal year**; the SD-FI interface and the `RV` document; and why a year-dependent FI range and an SD=FI number identity cannot both exist. Includes the distinction that saves the most wasted effort: European numbering statutes almost always name the *invoice* number, which is SD's, not the FI accounting document number.
 
 ## How these pages are written
 

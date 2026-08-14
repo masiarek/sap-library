@@ -47,3 +47,18 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | **Cash in transit** | Payer has cleared, receiver has not — a structural, permanent reconciling category, not an exception. | [Why IC recon is hard §5](01_FI/payments/intercompany_reconciliation_why_hard.md) |
 | **ICR / ICMR** | Intercompany reconciliation tooling — the ECC components (`FBICS3` → `FBICA3` → `FBICR3`) and S/4HANA's Intercompany Matching and Reconciliation. Verify what is activated in your own landscape. | [Why IC recon is hard](01_FI/payments/intercompany_reconciliation_why_hard.md) |
 | **Residual item vs partial payment** | Clearing with a residual creates a *new* document, breaking the link to the counterpart; a partial payment leaves the original open. Prefer the latter on IC accounts. | [Why IC recon is hard §7](01_FI/payments/intercompany_reconciliation_why_hard.md) |
+
+## Document types and numbering
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| `BKPF-BLART` | Document type — two characters, client-level, configured in `OBA7` and stored in `T003`. Controls permitted account types, required fields, reversal type, authorization, and *which number range key* is used. | [Document types and number ranges](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `T003-NUMKR` | The number range **key** carried by a document type — a pointer, not an interval. | [Part 1](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `RF_BELEG` | Number range object for FI documents. Intervals are maintained in `FBN1` **per company code and per fiscal year**. Conventionally unbuffered, because several jurisdictions expect gapless numbering. | [Part 1](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `RV_BELEG` | Number range object for SD billing documents. Has **no year dimension** — the asymmetry with `RF_BELEG` is the source of the SD/FI numbering conflict. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `NRIV` | Table holding number range intervals, including the current number. | [Part 1](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| **Year `9999`** | On an FI interval, means year-independent — one continuous sequence across all years. A real year means the numbering restarts annually. | [Part 1](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| **External assignment** | The interval's *Ext* flag: the calling application supplies the number and SAP only validates the range. What makes SD=FI number identity possible — and what rules out a year-dependent restart. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `RV` | The FI document type created from an SD billing document. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| `BKPF-AWTYP` / `AWKEY` | Reference transaction and key — the audit link from an FI document back to its originating document (`VBRK` for SD billing). The alternative to number identity. | [Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
+| **FEC** | France's *Fichier des Écritures Comptables* — the audit file that puts **accounting entry** numbering in scope, unlike most European rules which address the invoice number. | [Part 3](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |

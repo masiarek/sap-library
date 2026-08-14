@@ -49,6 +49,9 @@ FIXUPS = {
     "Bapi": "BAPI",
     "Cds": "CDS",
     "Bp": "BP",
+    "Sd": "SD",
+    "Rv": "RV",
+    "Fec": "FEC",
 }
 
 # Reading order per folder, keyed by folder path relative to the repo root.
@@ -56,11 +59,14 @@ FIXUPS = {
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
     ".": ["01_FI"],
-    "01_FI": ["payments"],
+    "01_FI": ["payments", "document_types_and_number_ranges"],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
         "intercompany_settlement_worked_example.md",
         "intercompany_reconciliation_why_hard.md",
+    ],
+    "01_FI/document_types_and_number_ranges": [
+        "document_types_and_number_ranges.md",
     ],
 }
 
@@ -72,9 +78,16 @@ def _label(folder_name: str) -> str:
     out = []
     for i, w in enumerate(words):
         titled = w[:1].upper() + w[1:]
-        fixed = FIXUPS.get(titled, titled)
-        # A lowercase-only fixup ("vs", "and") never leads a label.
-        out.append(titled if i == 0 and fixed.islower() else fixed)
+        fixed = FIXUPS.get(titled)
+        if fixed is not None:
+            # A lowercase-only fixup ("vs", "and") never leads a label.
+            out.append(titled if i == 0 and fixed.islower() else fixed)
+        else:
+            # Sentence case, not title case: only the first word is capitalised,
+            # so a folder reads "Document types and number ranges" rather than
+            # shouting every word. Acronyms are handled by FIXUPS above and keep
+            # their casing wherever they sit.
+            out.append(titled if i == 0 else w.lower())
     return " ".join(out) or folder_name
 
 
