@@ -93,3 +93,14 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | `READ_EXCHANGE_RATE` | The lookup the currency conversion uses: effective rate after inversion and reference currency. Not to be confused with `BAPI_EXCHANGERATE_GETDETAIL`, which returns the literal table entry. | [How a posting picks its rate §5](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
 | Cross rate | A rate between two currencies calculated from each one's rate against a reference currency. As stale as its older leg. | [Rate check report](01_FI/exchange_rates/exchange_rate_check_report.md) |
 | `OB08` / `OBBS` / `OB07` | Maintain rates · translation ratios · rate types (reference currency, inversion). | [How a posting picks its rate](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+
+## Addresses
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| `T005-LNPLZ` / `T005-PRPLZ` | Postal code length and check rule per country. The rule (1–9) decides whether the length is a maximum or exact, digits only or any character, blanks allowed or not. | [Postal code checks](02_Master_Data/addresses/postal_code_checks.md) |
+| `T005-XPLZS` / `T005-XPLPF` | Postal code required for a street address / for a P.O. box address. Separate from the format check. | [Postal code checks §1](02_Master_Data/addresses/postal_code_checks.md) |
+| `OY17` | *Set Country-Specific Checks* — maintains the fields above. Client-dependent Customizing. | [Postal code checks §1](02_Master_Data/addresses/postal_code_checks.md) |
+| Rule 9 | Check against a country-specific template (`N` digit, `A` letter). In S/4 the templates are rows of `ADDR_PCDFORMAT`, one per country. | [Postal code checks §3](02_Master_Data/addresses/postal_code_checks.md) |
+| `ADDR_POSTAL_CODE_CHECK` | The function module that applies the rule — for every application and every interface that saves an address. | [Postal code checks §1](02_Master_Data/addresses/postal_code_checks.md) |
+| BAS | Business Address Services (`BC-SRV-ADR`), the central address store and its checks. | [Addresses](02_Master_Data/addresses/README.md) |

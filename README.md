@@ -15,6 +15,7 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 | Area | What's in it |
 | :-- | :-- |
 | [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates |
+| [02_Master_Data — Master data](02_Master_Data/README.md) | Addresses: the postal code check per country |
 
 ### Payments, clearing and intercompany
 
@@ -35,6 +36,10 @@ A three-page sequence, in reading order:
 - [How a posting picks its exchange rate](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) — the latest `TCURR` entry on or before the translation date, however old; the inverted date; and the rate type with a reference currency, which reads `EUR → USD` and `CAD → USD` and ignores the `EUR → CAD` you maintained.
 - [A report that shows which rate a posting would get](01_FI/exchange_rates/exchange_rate_check_report.md) — read-only ABAP, built on the standard lookup: rates on a key date with their age, history with gaps, posted documents against the table rate. Includes the five assumptions its first runs proved wrong.
 - [Test scenarios for foreign currency postings from an interface](01_FI/exchange_rates/testing_foreign_currency_postings.md) — the same amount in two months, the month boundary, rounding both ways, the missing rate, and the month that is not loaded yet. Anonymized.
+
+### Addresses
+
+- [Postal code checks per country](02_Master_Data/addresses/postal_code_checks.md) — two fields in `T005` and nine rules; why *"4 digits or `A9999AAA`"* has no exact setting; a five-country request worked through, with what each setting also lets through; the SAP Notes on the subject; and why a stricter rule surfaces months later, on somebody else's save.
 
 ## How these pages are written
 

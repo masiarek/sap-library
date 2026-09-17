@@ -58,7 +58,7 @@ FIXUPS = {
 # A folder's README.md is pinned first regardless (navigation.indexes requires
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
-    ".": ["01_FI"],
+    ".": ["01_FI", "02_Master_Data"],
     "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates"],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
@@ -69,6 +69,10 @@ NAV_ORDER: dict[str, list[str]] = {
         "how_a_posting_picks_its_rate.md",
         "exchange_rate_check_report.md",
         "testing_foreign_currency_postings.md",
+    ],
+    "02_Master_Data": ["addresses"],
+    "02_Master_Data/addresses": [
+        "postal_code_checks.md",
     ],
     "01_FI/document_types_and_number_ranges": [
         "document_types_and_number_ranges.md",
