@@ -11,9 +11,12 @@
 *& View 2  Rate history       TCURR entries per currency pair with the
 *&                            days between consecutive entries (finds a
 *&                            month that was skipped).
-*& View 3  Posted documents   Foreign currency documents: BKPF-KURSF and
-*&                            the posted local amount against the table
-*&                            rate on the translation date.
+*& View 3  Posted documents   BKPF-KURSF and the posted local amount
+*&                            against the table rate on the translation
+*&                            date. Where the document carries a second
+*&                            local currency (group currency), that
+*&                            amount is checked as well, assuming the
+*&                            same exchange rate type.
 *&
 *& Traffic light   green  = as expected
 *&                 yellow = rate is from an earlier month / old rate
@@ -139,6 +142,10 @@ CLASS lcl_report DEFINITION FINAL.
              dmbtr      TYPE bseg-dmbtr,
              dmbtr_exp  TYPE bseg-dmbtr,
              dmbtr_diff TYPE bseg-dmbtr,
+             hwae2      TYPE bkpf-hwae2,
+             dmbe2      TYPE bseg-dmbe2,
+             dmbe2_exp  TYPE bseg-dmbe2,
+             dmbe2_diff TYPE bseg-dmbe2,
              xblnr      TYPE bkpf-xblnr,
              usnam      TYPE bkpf-usnam,
              remark     TYPE c LENGTH 140,
@@ -678,18 +685,25 @@ CLASS lcl_report IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD show_documents.
-    DATA: lt_out   TYPE STANDARD TABLE OF ty_document,
-          ls_out   TYPE ty_document,
-          lv_kurst TYPE tcurr-kurst,
-          lv_wwert TYPE d,
-          lv_age   TYPE i.
+    DATA: lt_out     TYPE STANDARD TABLE OF ty_document,
+          ls_out     TYPE ty_document,
+          lv_kurst   TYPE tcurr-kurst,
+          lv_wwert   TYPE d,
+          lv_age     TYPE i,
+          lv_date2   TYPE d,
+          lv_from2   TYPE tcurr-fcurr,
+          lv_amount2 TYPE bseg-wrbtr.
 
-    " Debit side of every document = document total, in both currencies.
+    " Debit side of every document = document total, in every currency.
     " BSEG can be joined because this is S/4HANA (transparent table).
+    " HWAE2 / BASW2 / UMRD2: second local currency of the document, what it
+    " is translated from, and which date the rate is read for.
     SELECT h~belnr, h~gjahr, h~blart, h~monat, h~bldat, h~budat, h~wwert,
            h~waers, h~hwaer, h~kursf, h~xblnr, h~usnam,
+           h~hwae2, h~basw2, h~umrd2,
            SUM( i~wrbtr ) AS wrbtr,
-           SUM( i~dmbtr ) AS dmbtr
+           SUM( i~dmbtr ) AS dmbtr,
+           SUM( i~dmbe2 ) AS dmbe2
       FROM bkpf AS h
       INNER JOIN bseg AS i
         ON  i~bukrs = h~bukrs
@@ -702,7 +716,8 @@ CLASS lcl_report IMPLEMENTATION.
         AND h~bstat = @space
         AND i~shkzg = 'S'
       GROUP BY h~belnr, h~gjahr, h~blart, h~monat, h~bldat, h~budat, h~wwert,
-               h~waers, h~hwaer, h~kursf, h~xblnr, h~usnam
+               h~waers, h~hwaer, h~kursf, h~xblnr, h~usnam,
+               h~hwae2, h~basw2, h~umrd2
       ORDER BY h~gjahr, h~belnr
       INTO TABLE @DATA(lt_docs).
 
@@ -710,8 +725,11 @@ CLASS lcl_report IMPLEMENTATION.
     SELECT blart, kurst FROM t003 INTO TABLE @DATA(lt_t003).
 
     LOOP AT lt_docs INTO DATA(ls_doc).
-      IF ls_doc-waers = ls_doc-hwaer.
-        CONTINUE.                       " local currency document: nothing to check
+      " Nothing is translated when document currency, local currency and
+      " second local currency (if any) are all the same.
+      IF ls_doc-waers = ls_doc-hwaer
+         AND ( ls_doc-hwae2 IS INITIAL OR ls_doc-hwae2 = ls_doc-hwaer ).
+        CONTINUE.
       ENDIF.
 
       lv_kurst = VALUE #( lt_t003[ blart = ls_doc-blart ]-kurst OPTIONAL ).
@@ -722,38 +740,70 @@ CLASS lcl_report IMPLEMENTATION.
 
       ls_out = CORRESPONDING #( ls_doc ).
       ls_out-kurst = lv_kurst.
+      CLEAR lv_age.
 
-      DATA(ls_rate) = get_rate( iv_kurst = lv_kurst
-                                iv_fcurr = ls_doc-waers
-                                iv_tcurr = ls_doc-hwaer
-                                iv_date  = lv_wwert ).
-      IF ls_rate-found = abap_false.
-        ls_out-light  = gc_light-red.
-        ls_out-remark = ls_rate-message.
-        APPEND ls_out TO lt_out.
-        CONTINUE.
+      " --- First local currency
+      IF ls_doc-waers = ls_doc-hwaer.
+        ls_out-dmbtr_exp = ls_out-wrbtr.
+      ELSE.
+        DATA(ls_rate) = get_rate( iv_kurst = lv_kurst
+                                  iv_fcurr = ls_doc-waers
+                                  iv_tcurr = ls_doc-hwaer
+                                  iv_date  = lv_wwert ).
+        IF ls_rate-found = abap_false.
+          ls_out-light  = gc_light-red.
+          ls_out-remark = ls_rate-message.
+          APPEND ls_out TO lt_out.
+          CONTINUE.
+        ENDIF.
+
+        ls_out-tab_rate   = ls_rate-rate.
+        ls_out-valid_from = ls_rate-valid_from.
+        ls_out-dmbtr_exp  = to_local( iv_kurst  = lv_kurst
+                                      iv_fcurr  = ls_doc-waers
+                                      iv_tcurr  = ls_doc-hwaer
+                                      iv_date   = lv_wwert
+                                      iv_amount = ls_out-wrbtr ).
+        TRY.
+            ls_out-dev_pct = ( CONV decfloat34( ls_doc-kursf ) - ls_rate-rate ) / ls_rate-rate * 100.
+          CATCH cx_sy_arithmetic_error.
+            ls_out-dev_pct = 0.
+            ls_out-remark  = 'Rate deviation could not be calculated'.
+        ENDTRY.
+        lv_age = lv_wwert - ls_rate-valid_from.
       ENDIF.
-
-      ls_out-tab_rate   = ls_rate-rate.
-      ls_out-valid_from = ls_rate-valid_from.
-      ls_out-dmbtr_exp  = to_local( iv_kurst  = lv_kurst
-                                    iv_fcurr  = ls_doc-waers
-                                    iv_tcurr  = ls_doc-hwaer
-                                    iv_date   = lv_wwert
-                                    iv_amount = ls_out-wrbtr ).
       ls_out-dmbtr_diff = ls_out-dmbtr - ls_out-dmbtr_exp.
 
-      TRY.
-          ls_out-dev_pct = ( CONV decfloat34( ls_doc-kursf ) - ls_rate-rate ) / ls_rate-rate * 100.
-        CATCH cx_sy_arithmetic_error.
-          ls_out-dev_pct = 0.
-          ls_out-remark  = 'Rate deviation could not be calculated'.
-      ENDTRY.
+      " --- Second local currency (group currency), same rate type assumed
+      IF ls_doc-hwae2 IS NOT INITIAL.
+        lv_date2 = SWITCH #( ls_doc-umrd2 WHEN '1' THEN ls_doc-bldat
+                                          WHEN '2' THEN ls_doc-budat
+                                          ELSE lv_wwert ).
+        IF ls_doc-basw2 = '2'.            " translated from the first local currency
+          lv_from2   = ls_doc-hwaer.
+          lv_amount2 = ls_out-dmbtr.
+        ELSE.                             " translated from the document currency
+          lv_from2   = ls_doc-waers.
+          lv_amount2 = ls_out-wrbtr.
+        ENDIF.
+        IF lv_from2 = ls_doc-hwae2.
+          ls_out-dmbe2_exp = lv_amount2.
+        ELSE.
+          ls_out-dmbe2_exp = to_local( iv_kurst  = lv_kurst
+                                       iv_fcurr  = lv_from2
+                                       iv_tcurr  = ls_doc-hwae2
+                                       iv_date   = lv_date2
+                                       iv_amount = lv_amount2 ).
+        ENDIF.
+        ls_out-dmbe2_diff = ls_out-dmbe2 - ls_out-dmbe2_exp.
+      ENDIF.
 
-      lv_age = lv_wwert - ls_rate-valid_from.
       IF abs( ls_out-dev_pct ) > p_tol OR ls_out-dmbtr_diff <> 0.
         ls_out-light  = gc_light-red.
         ls_out-remark = 'Document differs from the table rate on the translation date'.
+      ELSEIF ls_out-dmbe2_diff <> 0.
+        ls_out-light  = gc_light-red.
+        ls_out-remark = 'Amount in the second local currency differs from the table rate'.
       ELSEIF lv_age > p_maxage.
         ls_out-light  = gc_light-yellow.
         ls_out-remark = |Table rate was { lv_age } days old on the translation date|.
@@ -766,7 +816,7 @@ CLASS lcl_report IMPLEMENTATION.
     ENDLOOP.
 
     IF lt_out IS INITIAL.
-      MESSAGE 'No foreign currency documents found for this selection' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE 'No documents with a currency translation found for this selection' TYPE 'S' DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -782,6 +832,9 @@ CLASS lcl_report IMPLEMENTATION.
                             ( name = 'DMBTR'      text = 'Posted local amt'    cfield = 'HWAER' )
                             ( name = 'DMBTR_EXP'  text = 'Expected local amt'  cfield = 'HWAER' )
                             ( name = 'DMBTR_DIFF' text = 'Difference'          cfield = 'HWAER' )
+                            ( name = 'DMBE2'      text = 'Posted 2nd LC amt'   cfield = 'HWAE2' )
+                            ( name = 'DMBE2_EXP'  text = 'Expected 2nd LC amt' cfield = 'HWAE2' )
+                            ( name = 'DMBE2_DIFF' text = 'Difference 2nd LC'   cfield = 'HWAE2' )
                             ( name = 'REMARK'     text = 'Remark' ) )
       CHANGING
         ct_data  = lt_out ).

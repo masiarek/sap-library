@@ -24,7 +24,7 @@ A company code with one local currency receives postings in two foreign currenci
 | :-- | :-- | :-- | :-- | :-- |
 | **1 · Rates on key date** | Which rate does a posting get on this date, since when is it valid, and what does a sample amount become in local currency? | Rate's valid-from is in the month of the key date | Rate is from an earlier month, but younger than the maximum age | No rate, or older than the maximum age |
 | **2 · Rate history** | Which `TCURR` entries exist, and how many days lie between consecutive entries? | — | Entry is dated after the key date, or is not read by this rate type | Gap to the previous entry, or age of the entry in force, exceeds the maximum age |
-| **3 · Posted documents** | For foreign currency documents: does `BKPF-KURSF` equal the table rate for the translation date, and does the posted local amount equal the expected one? | Both match | Match, but the table rate was already old on the translation date | Rate or amount differs |
+| **3 · Posted documents** | Does `BKPF-KURSF` equal the table rate for the translation date, does the posted local amount equal the expected one — and the same for the second local currency (group currency), where the document has one? | All match | Match, but the table rate was already old on the translation date | Rate or an amount differs |
 
 The maximum age defaults to 31 days — one missed monthly load turns the light red.
 
@@ -51,6 +51,8 @@ CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
 **The rate type is the document's, not the screen's.** View 3 reads `T003-KURST` for each document type and falls back to the rate type on the selection screen only when the document type names none.
 
 **The document total comes from the debit side.** View 3 joins `BKPF` to `BSEG` and sums `WRBTR` and `DMBTR` over debit lines (`SHKZG = 'S'`). That is the document total in both currencies for any document type, without knowing which line is the customer. For a two-line interface document the comparison is exact; for a many-line document, translating the total and translating each line can differ by a cent, so a difference of that size there is rounding, not a wrong rate.
+
+**The second local currency is checked from the document's own settings.** The header records how the amount was derived: `BKPF-HWAE2` (the currency), `BASW2` (translated from the document currency or from the first local currency amount) and `UMRD2` (document, posting or translation date). View 3 reads those rather than the ledger configuration, so it follows what the document was posted with. It assumes the same rate type as the first local currency — the one thing the header does not record. A document in local currency is therefore listed too, as soon as it carries a group currency.
 
 **The inverted date is converted in two places only.**
 
@@ -105,5 +107,5 @@ Setting selection texts in code uses the generated `%_<name>_%_app_%-text` field
 
 - Activated and run on an S/4HANA development system on **17 September 2026**, in three rounds the same day: the first version, the fixes for mistakes 1 and 2, and then the reference currency handling. **Views 1 and 2 ran in every round**; the last run showed ratios of 1 : 1, the missing leg named as `EUR/USD`, the 2001 leg named as the age of the `USD → CAD` rate, and two entries flagged as not pointing to the reference currency. System ID withheld — this is a public page.
 - Each version was checked with the `abaplint` parser before it was pasted into the system. That checks statement syntax, not types; all three activated without a correction, which is luck as much as method.
-- **View 3 has not been run at all.** It needs S/4HANA, because it joins `BSEG`.
-- The report reads rates for the **company code currency** only. Additional ledger currencies use their own rate types and translation date rules; they can be displayed through *Additional target currencies* in view 1, but view 3 does not check them.
+- **View 3 has not been run at all**, and its second-currency check was added after the last activation. It needs S/4HANA, because it joins `BSEG`.
+- View 3 checks the company code currency and the **second** local currency only, and the second one under the assumption of the same rate type. A third currency, or a group currency with its own rate type, is not covered; view 1 can at least display such a pair through *Additional target currencies*.
