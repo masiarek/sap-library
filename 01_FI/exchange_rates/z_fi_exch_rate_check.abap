@@ -849,8 +849,12 @@ CLASS lcl_report IMPLEMENTATION.
                                           WHEN '2' THEN ls_doc-budat
                                           ELSE lv_wwert ).
         IF ls_doc-basw2 = '2'.            " translated from the first local currency
+          " Chain from the EXPECTED local amount, as the posting chains from
+          " the local amount it calculated. Starting from the posted amount
+          " would report one wrong rate twice (and a USD document with group
+          " currency USD would not expect its own amount).
           lv_from2   = ls_doc-hwaer.
-          lv_amount2 = ls_out-dmbtr.
+          lv_amount2 = ls_out-dmbtr_exp.
         ELSE.                             " translated from the document currency
           lv_from2   = ls_doc-waers.
           lv_amount2 = ls_out-wrbtr.
