@@ -114,4 +114,6 @@ Written from working FI knowledge, with four points confirmed on an S/4HANA deve
 
 - **§5, the BAPI trap:** after new `CAD → USD` rates had been entered, the BAPI still returned 1.49600 for `USD → CAD` (the literal 2001 entry) while `CONVERT_TO_LOCAL_CURRENCY` converted 1,000.00 to 1,280.00 on the same date; and the BAPI returned nothing for `EUR → CAD` although both legs existed.
 
+- **§4, the cross rate:** with `EUR → USD` 1.25000 (direct) and `CAD → USD` 1.28000 (indirect) in force, `READ_EXCHANGE_RATE` returned `EUR → CAD` = 1.60000. These two legs multiply out exactly, so the observation says nothing about rounding.
+
 Not confirmed on a system: the rounding of cross rates (§4), and the behaviour of `TCURV-XINVR` (§4), which is described from experience.
