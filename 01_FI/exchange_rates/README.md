@@ -5,7 +5,7 @@ How a foreign currency posting finds its rate, a report that shows the answer be
 | Page | What it answers |
 | :-- | :-- |
 | [How a posting picks its exchange rate](how_a_posting_picks_its_rate.md) | The four inputs (pair, rate type, translation date, table); the inverted date in `TCURR`; why no entry is ever too old; and why a rate type with a reference currency does not read the pair you maintained. |
-| [A report that shows which rate a posting would get](exchange_rate_check_report.md) | `Z_FI_EXCH_RATE_CHECK`: rates on a key date with their age, the rate history with gaps, and posted documents against the table rate — plus the four wrong assumptions its first runs exposed. |
+| [A report that shows which rate a posting would get](exchange_rate_check_report.md) | `Z_FI_EXCH_RATE_CHECK`: rates on a key date with their age, the rate history with gaps, and posted documents against the table rate — plus the five wrong assumptions its first runs exposed. |
 | [Test scenarios for foreign currency postings from an interface](testing_foreign_currency_postings.md) | The same amount in two months, the month boundary, document date against posting date, rounding both ways, the missing rate and the month that is not loaded yet — with reference rates chosen so the expected cent cannot depend on internal rounding. |
 | [`z_fi_exch_rate_check.abap`](z_fi_exch_rate_check.abap) | The report's source. Read-only, one program, standard function modules only. |
 
