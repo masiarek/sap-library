@@ -33,7 +33,7 @@ A three-page sequence, in reading order:
 ### Exchange rates
 
 - [How a posting picks its exchange rate](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) — the latest `TCURR` entry on or before the translation date, however old; the inverted date; and the rate type with a reference currency, which reads `EUR → USD` and `CAD → USD` and ignores the `EUR → CAD` you maintained.
-- [A report that shows which rate a posting would get](01_FI/exchange_rates/exchange_rate_check_report.md) — read-only ABAP, built on the standard lookup: rates on a key date with their age, history with gaps, posted documents against the table rate. Includes the three assumptions its first runs proved wrong.
+- [A report that shows which rate a posting would get](01_FI/exchange_rates/exchange_rate_check_report.md) — read-only ABAP, built on the standard lookup: rates on a key date with their age, history with gaps, posted documents against the table rate. Includes the four assumptions its first runs proved wrong.
 - [Test scenarios for foreign currency postings from an interface](01_FI/exchange_rates/testing_foreign_currency_postings.md) — the same amount in two months, the month boundary, rounding both ways, the missing rate, and the month that is not loaded yet. Anonymized.
 
 ## How these pages are written

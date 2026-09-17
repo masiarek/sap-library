@@ -87,7 +87,7 @@ CLASS lcl_report DEFINITION FINAL.
              ffact      TYPE tcurr-ffact,
              tfact      TYPE tcurr-tfact,
              valid_from TYPE d,
-             message    TYPE bapiret1-message,
+             message    TYPE c LENGTH 100,
            END OF ty_rate,
            ty_rate_cache TYPE HASHED TABLE OF ty_rate
                          WITH UNIQUE KEY kurst fcurr tcurr date.
@@ -174,6 +174,12 @@ CLASS lcl_report DEFINITION FINAL.
                   iv_tcurr       TYPE tcurr-tcurr
                   iv_date        TYPE d
         RETURNING VALUE(rs_rate) TYPE ty_rate,
+      entry_valid_from
+        IMPORTING iv_kurst       TYPE tcurr-kurst
+                  iv_fcurr       TYPE tcurr-fcurr
+                  iv_tcurr       TYPE tcurr-tcurr
+                  iv_date        TYPE d
+        RETURNING VALUE(rv_date) TYPE d,
       to_local
         IMPORTING iv_kurst         TYPE tcurr-kurst
                   iv_fcurr         TYPE tcurr-fcurr
@@ -275,8 +281,12 @@ CLASS lcl_report IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_rate.
-    DATA: ls_bapi   TYPE bapi1093_0,
-          ls_return TYPE bapiret1.
+    DATA: lv_rate  TYPE tcurr-ukurs,
+          lv_ffact TYPE tcurr-ffact,
+          lv_tfact TYPE tcurr-tfact,
+          lv_bwaer TYPE tcurv-bwaer,
+          lv_from  TYPE d,
+          lt_cur   TYPE ty_curr_tab.
 
     READ TABLE gt_cache INTO rs_rate
          WITH TABLE KEY kurst = iv_kurst fcurr = iv_fcurr tcurr = iv_tcurr date = iv_date.
@@ -286,37 +296,94 @@ CLASS lcl_report IMPLEMENTATION.
 
     rs_rate = VALUE #( kurst = iv_kurst fcurr = iv_fcurr tcurr = iv_tcurr date = iv_date ).
 
-    " Same logic as a posting: latest rate with valid-from <= date,
-    " including inverted rates and rates through a reference currency.
-    CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
+    " READ_EXCHANGE_RATE is the lookup the currency conversion itself uses: it
+    " applies inversion and the reference currency of the rate type.
+    " (BAPI_EXCHANGERATE_GETDETAIL does not: it returns the TCURR entry of the
+    " literal pair, which a rate type with a reference currency never reads.)
+    CALL FUNCTION 'READ_EXCHANGE_RATE'
       EXPORTING
-        rate_type  = iv_kurst
-        from_curr  = iv_fcurr
-        to_currncy = iv_tcurr
-        date       = iv_date
+        date             = iv_date
+        foreign_currency = iv_fcurr
+        local_currency   = iv_tcurr
+        type_of_rate     = iv_kurst
       IMPORTING
-        exch_rate  = ls_bapi
-        return     = ls_return.
+        exchange_rate    = lv_rate
+        foreign_factor   = lv_ffact
+        local_factor     = lv_tfact
+      EXCEPTIONS
+        no_rate_found    = 1
+        no_factors_found = 2
+        no_spread_found  = 3
+        derived_2_times  = 4
+        overflow         = 5
+        zero_rate        = 6
+        OTHERS           = 7.
+    CASE sy-subrc.
+      WHEN 0.
+        IF lv_rate = 0.
+          rs_rate-message = 'No exchange rate found'.
+        ENDIF.
+      WHEN 1.
+        rs_rate-message = 'No exchange rate found'.
+      WHEN 2.
+        rs_rate-message = 'No translation ratio found (OBBS)'.
+      WHEN OTHERS.
+        rs_rate-message = |Rate lookup failed (READ_EXCHANGE_RATE exception { sy-subrc })|.
+    ENDCASE.
 
-    IF ls_return-type CA 'EAX'.
-      rs_rate-message = ls_return-message.
-    ELSEIF ls_bapi-exch_rate_v IS NOT INITIAL.       " indirect quotation
-      rs_rate-found      = abap_true.
-      rs_rate-rate       = - ls_bapi-exch_rate_v.
-      rs_rate-ffact      = ls_bapi-from_factor_v.
-      rs_rate-tfact      = ls_bapi-to_factor_v.
-      rs_rate-valid_from = ls_bapi-valid_from.
-    ELSEIF ls_bapi-exch_rate IS NOT INITIAL.         " direct quotation
-      rs_rate-found      = abap_true.
-      rs_rate-rate       = ls_bapi-exch_rate.
-      rs_rate-ffact      = ls_bapi-from_factor.
-      rs_rate-tfact      = ls_bapi-to_factor.
-      rs_rate-valid_from = ls_bapi-valid_from.
-    ELSE.
-      rs_rate-message = 'No exchange rate found'.
+    IF rs_rate-message IS INITIAL.
+      rs_rate-found = abap_true.
+      rs_rate-rate  = lv_rate.            " negative = indirect quotation
+      rs_rate-ffact = lv_ffact.
+      rs_rate-tfact = lv_tfact.
+
+      " Valid-from date, read from the entries the rate type really uses.
+      " With a reference currency these are the legs currency -> reference
+      " currency, and the rate is as old as its oldest leg.
+      IF iv_kurst = p_kurst.
+        lv_bwaer = gv_bwaer.
+      ELSE.
+        SELECT SINGLE bwaer FROM tcurv WHERE kurst = @iv_kurst INTO @lv_bwaer.
+      ENDIF.
+
+      IF lv_bwaer IS INITIAL.
+        rs_rate-valid_from = entry_valid_from( iv_kurst = iv_kurst iv_fcurr = iv_fcurr
+                                               iv_tcurr = iv_tcurr iv_date  = iv_date ).
+        IF rs_rate-valid_from IS INITIAL.   " answered from the inverse pair
+          rs_rate-valid_from = entry_valid_from( iv_kurst = iv_kurst iv_fcurr = iv_tcurr
+                                                 iv_tcurr = iv_fcurr iv_date  = iv_date ).
+        ENDIF.
+      ELSE.
+        lt_cur = VALUE #( ( waers = iv_fcurr ) ( waers = iv_tcurr ) ).
+        LOOP AT lt_cur INTO DATA(ls_cur) WHERE waers <> lv_bwaer.
+          lv_from = entry_valid_from( iv_kurst = iv_kurst iv_fcurr = ls_cur-waers
+                                      iv_tcurr = lv_bwaer iv_date  = iv_date ).
+          IF lv_from IS NOT INITIAL
+             AND ( rs_rate-valid_from IS INITIAL OR lv_from < rs_rate-valid_from ).
+            rs_rate-valid_from = lv_from.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
     ENDIF.
 
     INSERT rs_rate INTO TABLE gt_cache.
+  ENDMETHOD.
+
+  METHOD entry_valid_from.
+    " Latest TCURR entry of exactly this pair on or before the date.
+    " GDATU is inverted, so that is the smallest GDATU >= inverted date.
+    DATA(lv_gdatu) = date_to_gdatu( iv_date ).
+
+    SELECT MIN( gdatu ) FROM tcurr
+      WHERE kurst = @iv_kurst
+        AND fcurr = @iv_fcurr
+        AND tcurr = @iv_tcurr
+        AND gdatu >= @lv_gdatu
+      INTO @DATA(lv_min).
+
+    IF lv_min IS NOT INITIAL.
+      rv_date = gdatu_to_date( lv_min ).
+    ENDIF.
   ENDMETHOD.
 
   METHOD to_local.
@@ -617,16 +684,18 @@ CLASS lcl_report IMPLEMENTATION.
     LOOP AT lt_out REFERENCE INTO lr_out.
       DATA(lv_next) = sy-tabix + 1.
 
-      " TCURR itself carries no ratios (they are in TCURF), so take them
-      " from the standard lookup on the valid-from date of the entry.
-      DATA(ls_rate) = get_rate( iv_kurst = lr_out->kurst
-                                iv_fcurr = lr_out->fcurr
-                                iv_tcurr = lr_out->tcurr
-                                iv_date  = lr_out->valid_from ).
-      IF ls_rate-found = abap_true.
-        lr_out->ffact = ls_rate-ffact.
-        lr_out->tfact = ls_rate-tfact.
-      ENDIF.
+      " TCURR itself carries no ratios. They are in TCURF: the latest ratio
+      " of the same pair on or before the valid-from date of the entry.
+      DATA(lv_gdatu) = date_to_gdatu( lr_out->valid_from ).
+      SELECT ffact, tfact FROM tcurf
+        WHERE kurst = @lr_out->kurst
+          AND fcurr = @lr_out->fcurr
+          AND tcurr = @lr_out->tcurr
+          AND gdatu >= @lv_gdatu
+        ORDER BY gdatu ASCENDING
+        INTO ( @lr_out->ffact, @lr_out->tfact )
+        UP TO 1 ROWS.
+      ENDSELECT.
 
       " Days since the previous entry of the same pair
       IF lr_out->fcurr = lv_fcurr AND lr_out->tcurr = lv_tcurr.

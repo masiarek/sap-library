@@ -65,10 +65,12 @@ Because of §2 to §4, a `SELECT` on `TCURR` for "my pair, my date" is the wrong
 
 | Function | What it gives you |
 | :-- | :-- |
-| `BAPI_EXCHANGERATE_GETDETAIL` | Rate, ratios and the valid-from date for a rate type, a pair and a date; direct and indirect quotation in separate fields |
+| `READ_EXCHANGE_RATE` | The effective rate and the ratios for a rate type, a pair and a date — after inversion and after the reference currency. Negative = indirect quotation. |
 | `CONVERT_TO_LOCAL_CURRENCY` | The converted amount, rounded to the target currency's decimals |
 
 The [report](exchange_rate_check_report.md) is built on exactly these two, so what it shows is what a posting with no explicit rate would get.
+
+**A trap with a helpful name:** `BAPI_EXCHANGERATE_GETDETAIL` is *not* this lookup. It returns the table entry of the literal pair. With a reference currency that is an entry the rate type never reads — or nothing at all, for a pair that exists only as a cross rate. It answers "what did someone maintain for `USD → CAD`?", not "what is `USD → CAD` worth today?".
 
 ## 6. What ends up on the document
 
@@ -93,7 +95,8 @@ The tables (`TCURR`, `TCURF`, `TCURV`), the inverted date and the lookup are unc
 | Reference currency and inversion of a rate type | `OB07`, or `SE16N` on `TCURV`, fields `BWAER`, `XINVR` |
 | Entries and their valid-from dates | `OB08`; `SE16N` on `TCURR` (mind the inverted `GDATU`) |
 | Ratios | `OBBS`; `SE16N` on `TCURF` |
-| The rate a posting would get | `SE37` test of `BAPI_EXCHANGERATE_GETDETAIL`, or view 1 of the [report](exchange_rate_check_report.md) |
+| The rate a posting would get | `SE37` test of `READ_EXCHANGE_RATE` or `CONVERT_TO_LOCAL_CURRENCY`, or view 1 of the [report](exchange_rate_check_report.md) |
+| The BAPI returns the entry, not the rate | `SE37` test of `BAPI_EXCHANGERATE_GETDETAIL` for a pair that does not point to the reference currency, against the two functions above |
 | No age check | The same call with a date decades after the only entry — it answers |
 | The missing-leg message | Enter a foreign currency document (`FB01`) for a currency with no rate against the reference currency, and read the message |
 | What a document used | `FB03` header: exchange rate and translation date; `SE16N` on `BKPF`, fields `KURSF`, `WWERT` |
@@ -108,5 +111,7 @@ Written from working FI knowledge, with four points confirmed on an S/4HANA deve
 - **§4, reference currency:** that `M` uses a reference currency, and that cross-currency entries are not considered, was stated by the person who owns that configuration; the message above is consistent with it. One more observation supports it: the table held a `USD → EUR` entry (valid from 2011) and no `EUR → USD` entry — and the `EUR` posting still failed asking for `EUR / USD`. So an entry pointing *away from* the reference currency did not help. Whether that is the reference currency rule or inversion being switched off for `M`, the run cannot tell apart. That a direct `EUR → CAD` entry is ignored was **not** tested separately.
 
 - **§2 and §4, the entry that is read:** in a second company code on the same system, with local currency `USD`, a document of 22.00 CAD carried 14.71 USD — 22.00 / 1.496, the indirect `CAD → USD` entry from 2001. The same entry, read from the other side, gave 17.95 CAD for 12.00 USD in the CAD company code.
+
+- **§5, the BAPI trap:** after new `CAD → USD` rates had been entered, the BAPI still returned 1.49600 for `USD → CAD` (the literal 2001 entry) while `CONVERT_TO_LOCAL_CURRENCY` converted 1,000.00 to 1,280.00 on the same date; and the BAPI returned nothing for `EUR → CAD` although both legs existed.
 
 Not confirmed on a system: the rounding of cross rates (§4), and the behaviour of `TCURV-XINVR` (§4), which is described from experience.

@@ -101,7 +101,7 @@ FX-22 is not a pass/fail test. It is a question for the business with evidence a
 
 | Claim | Where to prove it |
 | :-- | :-- |
-| The rates the test will use | [Report](exchange_rate_check_report.md) view 1, key date = each posting date; or `SE37` on `BAPI_EXCHANGERATE_GETDETAIL` |
+| The rates the test will use | [Report](exchange_rate_check_report.md) view 1, key date = each posting date; or `SE37` on `CONVERT_TO_LOCAL_CURRENCY` (not `BAPI_EXCHANGERATE_GETDETAIL`, which returns the literal table entry) |
 | The entries exist against the reference currency | Report view 2; `OB08` |
 | Rate and translation date on a posted document | `FB03` header; `BKPF-KURSF`, `BKPF-WWERT` |
 | Foreign and local amount per line | `FB03`, switching the display currency; `BSEG-WRBTR`, `BSEG-DMBTR` |
