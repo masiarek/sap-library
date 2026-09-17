@@ -77,3 +77,18 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | :-- | :-- | :-- |
 | **AR Full** | A system running receivables **with** SD — typically several of them across a landscape. Invoices are billing documents, the FI document type is `RV`, and SD = FI number identity is available. | [Document types and number ranges, Part 2](01_FI/document_types_and_number_ranges/document_types_and_number_ranges.md) |
 | **AR Lite** | One central system running receivables **without** SD. Invoices originate upstream and arrive by interface; there is no billing document, no `RV`, and no document flow — so the source key must be carried deliberately. | [Worked decision: inbound AR interface](01_FI/document_types_and_number_ranges/case_inbound_ar_interface.md) |
+
+## Exchange rates
+
+| Term | Meaning | Worked through in |
+| :-- | :-- | :-- |
+| `TCURR` | Exchange rates, keyed by rate type, from-currency, to-currency and valid-from date. No valid-to: an entry is in force until a later one exists, however long that takes. | [How a posting picks its rate §2](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `TCURR-GDATU` | Valid-from date stored **inverted** (`99999999` − `YYYYMMDD`), so that "latest entry on or before a date" is one ascending index read. | [How a posting picks its rate §2](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `TCURR-UKURS` | The rate. **Negative = indirect quotation**, not a negative price. `BKPF-KURSF` uses the same convention. | [How a posting picks its rate §2](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `TCURF` | Translation ratios (1 : 1, 100 : 1). The ratio fields in `TCURR` itself can be empty; read ratios here or from the standard lookup. | [How a posting picks its rate §2](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `TCURV-BWAER` | Reference currency of a rate type. When set, rates exist only against it and every other pair is a calculated cross rate. | [How a posting picks its rate §4](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `T003-KURST` | Exchange rate type of a document type. Empty means `M`. | [How a posting picks its rate §1](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `BKPF-WWERT` | Translation date — the date the rate is read for. Defaults to the posting date, not the document date. | [How a posting picks its rate §1](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
+| `BKPF-KURSF` | The rate the document was translated with. Compare it with the table rate for `WWERT` to find documents posted before a late rate load. | [Rate check report, view 3](01_FI/exchange_rates/exchange_rate_check_report.md) |
+| Cross rate | A rate between two currencies calculated from each one's rate against a reference currency. As stale as its older leg. | [Rate check report](01_FI/exchange_rates/exchange_rate_check_report.md) |
+| `OB08` / `OBBS` / `OB07` | Maintain rates · translation ratios · rate types (reference currency, inversion). | [How a posting picks its rate](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) |
