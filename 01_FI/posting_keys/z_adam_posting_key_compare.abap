@@ -400,10 +400,25 @@ CLASS lcl_report IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD read_texts.
-    SELECT bschl, ltext
+    " TBSLT has a third key field after language and posting key: the
+    " special G/L posting keys (09, 19, 29, 39 ...) carry one text per
+    " special G/L indicator. A block insert into a unique table dumps on
+    " the second one (ITAB_DUPLICATE_KEY, first run). So: read in primary
+    " key order, which puts the blank indicator first, and insert row by
+    " row - a single-row INSERT on an existing key sets sy-subrc 4 and
+    " keeps the first text.
+    DATA lt_tbslt TYPE STANDARD TABLE OF tbslt WITH EMPTY KEY.
+
+    SELECT *
       FROM tbslt
       WHERE spras = @sy-langu
-      INTO TABLE @rt_texts.
+      ORDER BY PRIMARY KEY
+      INTO TABLE @lt_tbslt.
+
+    LOOP AT lt_tbslt INTO DATA(ls_tbslt).
+      INSERT VALUE #( bschl = ls_tbslt-bschl
+                      ltext = ls_tbslt-ltext ) INTO TABLE rt_texts.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD total_length.

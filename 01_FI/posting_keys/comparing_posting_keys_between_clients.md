@@ -25,7 +25,7 @@ One posting key is one row. The fields that matter for a comparison:
 | `XZAHL` | Payment transaction flag | *Payment transaction* |
 | `FAUS1`, `FAUS2` | **The field status** — see below | the *Maintain Field Status* screen |
 
-Texts are in `TBSLT`, one row per language. `SE11` lists the full field set; the ones above are the ones the report reads.
+Texts are in `TBSLT` — one row per language **and, for the special G/L posting keys, one per special G/L indicator**: the table has a third key field, which the first run of the report found the hard way (below). `SE11` lists the full field set; the ones above are the ones the report reads.
 
 ### The field status is two strings
 
@@ -105,6 +105,12 @@ The remote side needs nothing installed: only a user who may call `RFC_READ_TABL
 3. An RFC destination (`SM59`, an ABAP connection) to the other client. For **another client of the same system**, the destination points at the same host and system number with the other client number and a user there. Basis usually owns these; ask for one per client you compare against.
 4. The user in the destination needs to call `RFC_READ_TABLE` (an `S_RFC` authorization for the function's group — `SE37` shows which) and to display `TBSL` (`S_TABU_DIS` for its authorization group, or `S_TABU_NAM` for the table).
 
+## What the first run got wrong
+
+Recorded here in the spirit of the [exchange rate report](../exchange_rates/exchange_rate_check_report.md#what-the-first-runs-got-wrong): every assumption the system corrected, with the fix.
+
+**1. `TBSLT` is not one row per language and posting key.** The first run ended in a short dump on the text read — a duplicate key while filling a unique table, on posting key `09`. That key is the customer special G/L debit, and `TBSLT` keeps one text for it per special G/L indicator, so the table has a third key field and the block insert met the same posting key twice. *Fix:* read the texts in primary key order, which puts the blank indicator first, and insert them one row at a time — a single-row insert on an existing key sets `sy-subrc` to 4 and keeps the first text instead of terminating. The posting key rows in `TBSL` are not affected: that table's key is client and posting key only.
+
 ## What else decides whether Profit Center and Business Area are required
 
 Comparing posting keys settles whether the *posting keys* differ. It does not by itself settle *"why is the field required in one client and not the other"*, because the posting key is one of several inputs to the field status a user actually meets:
@@ -133,6 +139,6 @@ If the question behind the comparison is *"which client is right?"*, the transpo
 ## Provenance and caveats
 
 - Written **24 September 2026** from experience with the module. **Nothing on this page is confirmed against a named system.** Field and table names are given because they are the stable core; message texts, menu paths and the columns of the `TMOD*` tables are deliberately not quoted.
-- The report was parsed and syntax-checked with `abaplint` (release 7.58 syntax) and has **not yet been activated or run**. The first activation may need a correction — the [exchange rate report](../exchange_rates/exchange_rate_check_report.md#provenance-and-caveats) carried the same caveat until its first run. This page will say so when it has run.
+- The report was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **It activated without correction on 24 September 2026** on an S/4HANA system (ID withheld — public page), and its first run terminated in the text read with the duplicate key described above. The corrected version has been parsed but, as of this writing, **not yet re-run**; the comparison itself and the RFC read are therefore still unconfirmed against a system. This page will say so when they have run.
 - The three status characters and the combination rule are as remembered; the verification table names the check for each. If your system shows a fourth character, the report prints it in quotes rather than guessing.
 - `RFC_READ_TABLE` is a standard function and in some landscapes its use is restricted by policy rather than by authorization. If it is, the download-and-decode route needs no function at all.
