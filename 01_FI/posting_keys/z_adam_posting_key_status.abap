@@ -10,6 +10,10 @@
 *& The field status of a posting key is two character strings,
 *& TBSL-FAUS1 and TBSL-FAUS2, one character per screen field:
 *&   '+' required entry    '.' optional entry    '-' suppressed
+*& A blank is not a status: the key was last saved in OB41 before that
+*& field existed in the definition (Segment sits in FAUS2, at 101 on
+*& the system this ran on), so nobody ever chose one. The list says
+*& "not maintained" for it.
 *& Which position belongs to which field is looked up at runtime in
 *& the field selection definition table TMODU (read dynamically, so the
 *& program activates whatever its layout): the rows of the FI document's
@@ -85,9 +89,9 @@ CLASS lcl_report DEFINITION FINAL.
     TYPES: BEGIN OF ty_out,
              mandt    TYPE sy-mandt,
              bschl    TYPE tbsl-bschl,
-             ba_stat  TYPE c LENGTH 10,
-             pc_stat  TYPE c LENGTH 10,
-             seg_stat TYPE c LENGTH 10,
+             ba_stat  TYPE c LENGTH 14,
+             pc_stat  TYPE c LENGTH 14,
+             seg_stat TYPE c LENGTH 14,
              ltext    TYPE tbslt-ltext,
              koart   TYPE tbsl-koart,
              shkzg   TYPE tbsl-shkzg,
@@ -450,7 +454,7 @@ CLASS lcl_report IMPLEMENTATION.
                         WHEN '+' THEN 'required'
                         WHEN '.' THEN 'optional'
                         WHEN '-' THEN 'suppressed'
-                        WHEN ' ' THEN '(blank)'
+                        WHEN ' ' THEN 'not maintained'
                         ELSE |'{ lv_char }'| ).
   ENDMETHOD.
 

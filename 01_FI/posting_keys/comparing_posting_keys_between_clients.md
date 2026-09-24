@@ -64,7 +64,7 @@ One row per posting key of the client you are logged on to, five columns:
 | :-- | :-- |
 | Client | `sy-mandt`, so that lists exported from several clients can be stacked |
 | Posting key | `BSCHL` |
-| *Business Area*, *Profit Center*, *Segment* | `required`, `optional`, `suppressed`, or `(blank)` for a position the strings do not use. `?` means the position is not known — see the next section |
+| *Business Area*, *Profit Center*, *Segment* | `required`, `optional`, `suppressed`, or `not maintained` for a position the row carries no character at — see [blank is not a status](#blank-is-not-a-status). `?` means the position is not known — see the next section |
 
 *More columns* adds the name, account type, D/C, reversal key, the three flags and the raw `FAUS1|FAUS2` strings.
 
@@ -79,7 +79,7 @@ SKB1-FAUS1|033|BSEG|GSBER|D||X
 SKB1-FAUS1|042|BSEG|PRCTR|S||X
 ```
 
-— one row per account type, all with the same number, so **Business Area is position 33 and Profit Center position 42** there. The same table also holds other applications' field selections with their own numbering; Real Estate (`TIV01-AUSWA`) puts its profit center at 29, which is why the lookup is restricted to `SKB1-FAUS1` and why the field name must match a whole column and not a substring (`PSEGMENT` and `PPRCTR`, the partner fields, would otherwise match).
+— one row per account type, all with the same number, so **Business Area is position 33 and Profit Center position 42** there; the next run found **Segment at 101**, which lies in the second string. The same table also holds other applications' field selections with their own numbering; Real Estate (`TIV01-AUSWA`) puts its profit center at 29, which is why the lookup is restricted to `SKB1-FAUS1` and why the field name must match a whole column and not a substring (`PSEGMENT` and `PPRCTR`, the partner fields, would otherwise match).
 
 When the rows do not agree, or none matches, the report first displays them — table, field, candidate number, every number in the row, and the row's content — so that the position can be read off and entered on the selection screen. *Show the definition rows* forces that display even when the lookup succeeded, which is how you check that it picked the right number.
 
@@ -94,6 +94,17 @@ Reading the table dynamically is deliberate: its layout is not asserted anywhere
 | | *Business Area position*, *Profit Center position*, *Segment position* | 0 to look up; a number overrides the lookup for that field |
 | Output | *More columns* | Name, attributes and raw strings |
 | | *Show the definition rows* | Display what the lookup found before the list |
+
+### Blank is not a status
+
+The first full list showed Segment as blank on almost every posting key and `optional` on one. That is not a fourth status. A posting key row gets a character at a position only when it is saved in `OB41` after that field exists in the definition. Segment sits at position 101 — in `FAUS2`, the second string, which exists because the field list outgrew the first one — and the standard posting keys were delivered and last saved long before Segment was added to the definition. So their second string is empty there. The one key that showed `optional` is simply a row that was saved after Segment existed, by SAP or by someone on site.
+
+What an unmaintained position does at posting time is not decidable from the string. From experience, the entry screens treat it as suppressed: the field is not offered until a status is set explicitly, which is the familiar *"Segment does not appear in the coding block"* problem and its fix in `OB41` and `OBC4`. Two checks settle it in your system, and neither takes a minute:
+
+1. `OB41`, a posting key the list shows as `not maintained`, *Maintain Field Status*, additional account assignments: which radio button Segment shows, against a key the list shows as `optional`.
+2. `FB01` with a G/L posting key: whether Segment is offered on the line.
+
+For Segment specifically it rarely matters: the field is derived from the profit center rather than typed, and the field status governs manual entry only. For a field that *is* typed, `not maintained` is a row to maintain, not a status to reason about.
 
 ### Checking a position independently
 
@@ -117,6 +128,8 @@ Recorded here in the spirit of the [exchange rate report](../exchange_rates/exch
 **2. A position nobody knows is a status nobody sees.** The second run listed every posting key with the two status columns empty, because the first version expected the positions to be entered and offered a trick for finding them that needed a second client. *Fix:* the report looks the positions up itself, in the definition tables, and shows what it found when the lookup is not unambiguous. The same evening the cross-client comparison the report had started as was dropped: the question was about the current client, and a list per client compares well enough.
 
 **3. The definition table serves more than FI.** The third run found Business Area at 33 without doubt and refused to name a position for Profit Center: the FI rows all said 42, and one Real Estate row said 29. The lookup had matched any row mentioning the field. *Fix:* restrict the rows to the field selection asked for (`SKB1-FAUS1`), and match the field name as a whole column value, so that the partner fields `PSEGMENT` and `PPRCTR` cannot widen the search again once Segment was added to the list.
+
+**4. The fourth run found all three positions by itself** — 33, 42 and 101 — and raised the question above: the Segment column was blank on nearly every key. Not a mistake in the program, but a mistake waiting to happen in the reader, so the list now prints `not maintained` for a blank character instead of `(blank)`.
 
 ## What else decides whether Profit Center and Business Area are required
 
@@ -147,5 +160,5 @@ If the question behind a comparison is *"which client is right?"*, the transport
 ## Provenance and caveats
 
 - Written **24 September 2026** from experience with the module. Field and table names are given because they are the stable core; message texts, menu paths and the columns of the `TMOD*` tables are deliberately not quoted — the report reads those tables without assuming any column.
-- The program was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **Activated and run on an S/4HANA system on 24 September 2026** (ID withheld — public page), three runs: the first dumped on the `TBSLT` read; the second listed all posting keys with empty status columns; the third, with the lookup, displayed the `TMODU` rows quoted above and named 33 for Business Area. **Confirmed against that system:** `TMODU` exists, is readable, and holds `SKB1-FAUS1` rows with `033` for `GSBER` and `042` for `PRCTR`. **Not yet run:** the version with the `SKB1-FAUS1` restriction, whole-column matching and the Segment column; that Segment has a row of its own in the definition is expected, not yet seen.
+- The program was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **Activated and run on an S/4HANA system on 24 September 2026** (ID withheld — public page), three runs: the first dumped on the `TBSLT` read; the second listed all posting keys with empty status columns; the third, with the lookup, displayed the `TMODU` rows quoted above and named 33 for Business Area. The fourth run, with the `SKB1-FAUS1` restriction, whole-column matching and the Segment column, listed all posting keys with the three statuses filled. **Confirmed against that system, 24 September 2026:** `TMODU` exists, is readable, and holds `SKB1-FAUS1` rows naming `033` for `GSBER`, `042` for `PRCTR` and `101` for `SEGMENT`; the standard customer posting keys carry `.` at 33, `-` at 42 on all but `01` and `09`, and a blank at 101 on all but `06`. **Not confirmed:** what the posting screens do with a blank position — see [blank is not a status](#blank-is-not-a-status) for the two checks. The `not maintained` wording is parsed, not yet run.
 - The three status characters and the combination rule are as remembered; the verification table names the check for each. If your system shows a fourth character, the report prints it in quotes rather than guessing.
