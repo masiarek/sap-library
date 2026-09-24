@@ -1,11 +1,11 @@
 # Posting keys
 
-What a posting key carries, where it lives per client, and how to tell two clients apart on the two fields that usually matter.
+What a posting key carries, where it lives per client, and how to see — per posting key, in words — whether the two fields that usually matter are suppressed, required or optional.
 
 | Page | What it answers |
 | :-- | :-- |
-| [Comparing posting keys between clients](comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key, why the field status is two character strings, the three ways to compare clients and what each one can and cannot tell you, how to find the position of Profit Center and Business Area once, and what else decides whether those fields are required. |
-| [`z_adam_posting_key_compare.abap`](z_adam_posting_key_compare.abap) | The comparison report: this client's `TBSL` against another client of the same system (by number, no destination) or of another system (RFC), two chosen fields decoded side by side, every differing position listed, traffic light per key. Read-only. |
+| [Comparing posting keys between clients](comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key, why the field status is two character strings, the three ways to compare clients and what each one can and cannot tell you, and what else decides whether Profit Center and Business Area are required. |
+| [`z_adam_posting_key_status.abap`](z_adam_posting_key_status.abap) | The report: every posting key of the client you are in, with Profit Center and Business Area decoded to required / optional / suppressed. Looks the positions up in the field-selection definition itself; run it in each client to compare. Read-only. |
 
 ## The one distinction to carry away
 

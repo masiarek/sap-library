@@ -39,7 +39,7 @@ A three-page sequence, in reading order:
 
 ### Posting keys
 
-- [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) — `OB41` is one row of `TBSL` per client, and the field status is two strings with one character per field; `SCMP` says *that* the string differs, and only decoding a position says whether it is the profit center. Three routes compared, a read-only report that decodes two chosen fields across an RFC destination and lists every differing position, the trick that finds a field's position in one run, and the other three inputs that decide whether Profit Center and Business Area are required.
+- [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) — `OB41` is one row of `TBSL` per client, and the field status is two strings with one character per field; `SCMP` says *that* the string differs, and only decoding a position says whether it is the profit center. Three routes compared, a read-only report that lists two chosen fields as required / optional / suppressed per posting key and looks their positions up in the field-selection definition itself, and the other three inputs that decide whether Profit Center and Business Area are required.
 
 ### Addresses
 

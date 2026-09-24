@@ -30,7 +30,7 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 
 | Page | What it answers |
 | :-- | :-- |
-| [Comparing posting keys between clients](posting_keys/comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key and why its field status is two character strings; `SCMP` and a download against a read-only report that decodes Profit Center and Business Area on both sides of an RFC destination; how to find a field's position once; and what else decides whether the field is required. |
+| [Comparing posting keys between clients](posting_keys/comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key and why its field status is two character strings; `SCMP` and a download against a read-only report that lists Profit Center and Business Area as required / optional / suppressed per posting key, looking the positions up itself; and what else decides whether the field is required. |
 
 ## Recurring themes across these pages
 
