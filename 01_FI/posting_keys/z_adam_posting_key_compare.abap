@@ -1,13 +1,19 @@
 *&---------------------------------------------------------------------*
 *& Report  Z_ADAM_POSTING_KEY_COMPARE
 *&---------------------------------------------------------------------*
-*& Posting keys (OB41, table TBSL) of this client against the client
-*& behind an RFC destination, with the field status of two chosen
-*& fields - meant for Profit Center and Business Area - decoded side
-*& by side. Read-only: the report changes nothing, here or there.
+*& Posting keys (OB41, table TBSL) of this client against another
+*& client, with the field status of two chosen fields - meant for
+*& Profit Center and Business Area - decoded side by side.
+*& Read-only: the report changes nothing, here or there.
 *&
-*& Without an RFC destination it lists this client's posting keys with
-*& the two decoded statuses and the raw field status strings.
+*& The other side is one of:
+*&   another client of THIS system  - enter its client number; the
+*&                                    report reads its TBSL directly,
+*&                                    no RFC destination needed
+*&   a client of ANOTHER system     - enter an RFC destination
+*&   nothing                        - lists this client's posting keys
+*&                                    with the two decoded statuses and
+*&                                    the raw field status strings
 *&
 *& The field status of a posting key is two character strings,
 *& TBSL-FAUS1 and TBSL-FAUS2, one character per field:
@@ -32,7 +38,8 @@ REPORT z_adam_posting_key_compare.
 DATA gv_bschl TYPE bschl.
 
 SELECTION-SCREEN BEGIN OF BLOCK b01 WITH FRAME TITLE t_b01.
-  PARAMETERS p_dest TYPE rfcdest.
+  PARAMETERS: p_mandt TYPE mandt,
+              p_dest  TYPE rfcdest.
   SELECT-OPTIONS s_bschl FOR gv_bschl.
 SELECTION-SCREEN END OF BLOCK b01.
 
@@ -86,7 +93,7 @@ CLASS lcl_report DEFINITION FINAL.
     TYPES: ty_bschl_tab TYPE SORTED TABLE OF tbsl-bschl WITH UNIQUE KEY table_line,
            ty_char1     TYPE c LENGTH 1.
 
-    " One output line. *_L = this client, *_R = the client behind P_DEST.
+    " One output line. *_L = this client, *_R = the other client.
     TYPES: BEGIN OF ty_out,
              light   TYPE c LENGTH 1,
              bschl   TYPE tbsl-bschl,
@@ -125,6 +132,9 @@ CLASS lcl_report DEFINITION FINAL.
     CLASS-METHODS:
       read_local
         RETURNING VALUE(rt_keys) TYPE ty_key_tab,
+      read_other_client
+        IMPORTING iv_mandt       TYPE mandt
+        RETURNING VALUE(rt_keys) TYPE ty_key_tab,
       read_remote
         IMPORTING iv_dest  TYPE rfcdest
         EXPORTING et_keys  TYPE ty_key_tab
@@ -159,6 +169,18 @@ ENDCLASS.
 CLASS lcl_report IMPLEMENTATION.
 *----------------------------------------------------------------------*
   METHOD check_selection.
+    IF p_mandt IS NOT INITIAL AND p_dest IS NOT INITIAL.
+      MESSAGE 'Enter either another client of this system or an RFC destination, not both' TYPE 'E'.
+    ENDIF.
+    IF p_mandt IS NOT INITIAL.
+      IF p_mandt = sy-mandt.
+        MESSAGE |Client { p_mandt } is the client you are logged on to| TYPE 'E'.
+      ENDIF.
+      SELECT SINGLE mandt FROM t000 WHERE mandt = @p_mandt INTO @DATA(lv_mandt).
+      IF sy-subrc <> 0.
+        MESSAGE |Client { p_mandt } does not exist in this system| TYPE 'E'.
+      ENDIF.
+    ENDIF.
     IF p_pos_a < 0 OR p_pos_b < 0.
       MESSAGE 'A position is 1 or greater, or blank' TYPE 'E'.
     ENDIF.
@@ -185,7 +207,13 @@ CLASS lcl_report IMPLEMENTATION.
     DATA(lt_loc)   = read_local( ).
     DATA(lt_texts) = read_texts( ).
 
-    IF p_dest IS NOT INITIAL.
+    " Name of the other side, for titles and messages. Blank = list mode.
+    DATA(lv_other) = COND string( WHEN p_mandt IS NOT INITIAL THEN |client { p_mandt }|
+                                  WHEN p_dest  IS NOT INITIAL THEN |{ p_dest }| ).
+
+    IF p_mandt IS NOT INITIAL.
+      lt_rem = read_other_client( p_mandt ).
+    ELSEIF p_dest IS NOT INITIAL.
       read_remote( EXPORTING iv_dest  = p_dest
                    IMPORTING et_keys  = lt_rem
                              ev_error = lv_error ).
@@ -245,7 +273,7 @@ CLASS lcl_report IMPLEMENTATION.
         ls_out-faus_r  = raw_string( ls_rem ).
       ENDIF.
 
-      IF p_dest IS INITIAL.
+      IF lv_other IS INITIAL.
         ls_out-found = 'this client'.
       ELSEIF lv_has_loc = abap_true AND lv_has_rem = abap_true.
         ls_out-found = 'both'.
@@ -277,24 +305,24 @@ CLASS lcl_report IMPLEMENTATION.
         ls_out-light = gc_light-red.
       ENDIF.
 
-      IF p_dest IS NOT INITIAL AND p_onlydf = abap_true AND ls_out-light = gc_light-green.
+      IF lv_other IS NOT INITIAL AND p_onlydf = abap_true AND ls_out-light = gc_light-green.
         CONTINUE.
       ENDIF.
       APPEND ls_out TO lt_out.
     ENDLOOP.
 
     IF lt_out IS INITIAL.
-      MESSAGE |All { lines( lt_keys ) } posting keys are identical in { sy-sysid } { sy-mandt } and { p_dest }| TYPE 'S'.
+      MESSAGE |All { lines( lt_keys ) } posting keys are identical in { sy-sysid } { sy-mandt } and { lv_other }| TYPE 'S'.
       RETURN.
     ENDIF.
 
-    IF p_dest IS INITIAL.
+    IF lv_other IS INITIAL.
       lv_title = |TBSL in { sy-sysid } { sy-mandt }: { p_nam_a } = pos. { p_pos_a }, { p_nam_b } = pos. { p_pos_b }|.
     ELSE.
-      lv_title = |TBSL { sy-sysid } { sy-mandt } vs { p_dest }: { p_nam_a } = { p_pos_a }, { p_nam_b } = { p_pos_b }|.
+      lv_title = |TBSL { sy-sysid } { sy-mandt } vs { lv_other }: { p_nam_a } = { p_pos_a }, { p_nam_b } = { p_pos_b }|.
     ENDIF.
 
-    DATA(lv_remote) = xsdbool( p_dest IS INITIAL ).   " hide the *_R columns in list mode
+    DATA(lv_remote) = xsdbool( lv_other IS INITIAL ).   " hide the *_R columns in list mode
     DATA(lv_noraw)  = xsdbool( p_raw IS INITIAL ).
 
     display(
@@ -331,6 +359,15 @@ CLASS lcl_report IMPLEMENTATION.
   METHOD read_local.
     SELECT bschl, shkzg, koart, stbsl, xsonu, xumsw, xzahl, faus1, faus2
       FROM tbsl
+      WHERE bschl IN @s_bschl
+      INTO TABLE @rt_keys.
+  ENDMETHOD.
+
+  METHOD read_other_client.
+    " Another client of this system: TBSL is client-dependent, so its rows
+    " for that client are one USING CLIENT away. No destination, no RFC.
+    SELECT bschl, shkzg, koart, stbsl, xsonu, xumsw, xzahl, faus1, faus2
+      FROM tbsl USING CLIENT @iv_mandt
       WHERE bschl IN @s_bschl
       INTO TABLE @rt_keys.
   ENDMETHOD.
@@ -528,7 +565,8 @@ INITIALIZATION.
   t_b02 = 'Fields to decode'.
   t_b03 = 'Output'.
   " Selection texts (maximum 30 characters). They replace maintained texts.
-  %_p_dest_%_app_%-text   = 'RFC destination (other client)'.
+  %_p_mandt_%_app_%-text  = 'Other client of this system'.
+  %_p_dest_%_app_%-text   = 'Or: RFC dest. of other system'.
   %_s_bschl_%_app_%-text  = 'Posting key'.
   %_p_pos_a_%_app_%-text  = 'Field A: position in FAUS1/2'.
   %_p_nam_a_%_app_%-text  = 'Field A: name for the list'.

@@ -1,10 +1,10 @@
 # Comparing posting keys between clients
 
-**Level: 201 · for FI consultants and the ABAP developer they borrow** — where a posting key is stored, what a comparison tool can and cannot see in it, and a read-only report that decodes the field status of two chosen fields (Profit Center and Business Area by default) on both sides of an RFC destination.
+**Level: 201 · for FI consultants and the ABAP developer they borrow** — where a posting key is stored, what a comparison tool can and cannot see in it, and a read-only report that decodes the field status of two chosen fields (Profit Center and Business Area by default) in this client and in another — a client of the same system read directly, or a client of another system read over an RFC destination.
 
 **One line:** A posting key is one row of `TBSL` per client, and its field status is two character strings inside that row. Comparing clients means reading the row from both sides and decoding the positions you care about — a standard table comparison tells you *that* the string differs, and only decoding tells you *whether it is the profit center*.
 
-Source: [`z_adam_posting_key_compare.abap`](z_adam_posting_key_compare.abap) — one executable program, one local class, one standard function module (`RFC_READ_TABLE`), nothing to transport into the other client.
+Source: [`z_adam_posting_key_compare.abap`](z_adam_posting_key_compare.abap) — one executable program, one local class, one standard function module (`RFC_READ_TABLE`, used only for another system), nothing to transport into the other client.
 
 ---
 
@@ -50,7 +50,7 @@ Two consequences that shape everything below:
 | :-- | :-- | :-- | :-- |
 | **Standard comparison**: `SCMP` (view/table comparison) with table `TBSL` and an RFC destination; `SM30` offers the same comparison from its menu; `SCU0` (once `OY19`) does the same for whole IMG areas or a transport request's objects | An RFC destination to the other client (`SM59`), and a user there allowed to display the table | Which posting keys exist on one side only, and which rows differ, field by field — `FAUS1` counted as one field | First pass: *is anything different at all?* — and for comparing an entire FI area after a transport or a refresh |
 | **Download and decode**: `SE16N` (or `SE16`) on `TBSL` in each client, export, decode the two positions with `MID()` in a spreadsheet | A logon in each client, nothing else — no RFC destination, no development | Profit center and business area status per key on each side | A one-off, or a client you cannot reach by RFC |
-| **The report below**: `Z_ADAM_POSTING_KEY_COMPARE` | `SE38` in one client and an RFC destination to the other | Both chosen fields decoded side by side, every differing position listed, the attributes side by side, one traffic light per key | Whenever it will be done more than once: after each quality refresh, across several clients, or for more than two fields |
+| **The report below**: `Z_ADAM_POSTING_KEY_COMPARE` | `SE38` in one client. For another client of the **same system**, nothing else — it reads that client's rows directly. For another **system**, an RFC destination | Both chosen fields decoded side by side, every differing position listed, the attributes side by side, one traffic light per key | Whenever it will be done more than once: after each quality refresh, across several clients, or for more than two fields |
 
 The standard route and the report are not rivals. `SCMP` on `TBSL` answers *"did the transport arrive?"* in a minute. The report answers *"and is the profit center required in both?"*, which `SCMP` cannot, and it answers it for fifty posting keys at once.
 
@@ -58,7 +58,7 @@ The standard route and the report are not rivals. `SCMP` on `TBSL` answers *"did
 
 The report deliberately hard-codes no position. Two ways to find one:
 
-**1. Change one field, compare, read the number.** In a sandbox client: `OB41`, posting key `40`, *Maintain Field Status*, set Profit Center to *required*, save. Run the report **from that client against an untouched client** with both positions left blank. Posting key `40` comes back yellow with exactly one entry in *Differing positions* — that entry is the profit center's position. Do the same for Business Area, or set both in one go with *different* statuses (profit center required, business area suppressed) and read which of the two differing positions holds the `+` in the *raw strings* column. Revert the change afterwards, or leave it in a sandbox that will be refreshed anyway.
+**1. Change one field, compare, read the number.** In a sandbox client: `OB41`, posting key `40`, *Maintain Field Status*, set Profit Center to *required*, save. Run the report **from that client against an untouched client** — the golden client of the same system, entered by number, needs no destination — with both positions left blank. Posting key `40` comes back yellow with exactly one entry in *Differing positions* — that entry is the profit center's position. Do the same for Business Area, or set both in one go with *different* statuses (profit center required, business area suppressed) and read which of the two differing positions holds the `+` in the *raw strings* column. Revert the change afterwards, or leave it in a sandbox that will be refreshed anyway.
 
 **2. Read the definition.** The `OB41` and `OBC4` screens read the position of each field from the field-selection definition tables (`TMOD*`). If you would rather read than experiment, `SE16` on those tables with the field name is the place to look. The report does not depend on them, so nothing on this page rests on their exact layout — which is why the first way is the recommended one: it proves the position in your release rather than reading it from a table whose columns this page does not vouch for.
 
@@ -70,7 +70,8 @@ The report deliberately hard-codes no position. Two ways to find one:
 
 | Block | Parameter | Meaning |
 | :-- | :-- | :-- |
-| Posting keys and other client | *RFC destination (other client)* | The client to compare against. **Blank lists this client only**, decoded, with no comparison columns |
+| Posting keys and other client | *Other client of this system* | A client number of the system you are logged on to. The report reads that client's `TBSL` directly — no RFC destination, nothing from Basis. Checked against `T000`, and refused if it is the client you are in |
+| | *Or: RFC destination of other system* | A client of **another** system, over an RFC destination. Not together with the client number. **Both blank lists this client only**, decoded, with no comparison columns |
 | | *Posting key* | Restrict to some keys; blank means all |
 | Fields to decode | *Field A: position*, *Field A: name* | Position in `FAUS1`/`FAUS2`, and the name the list uses for it. Defaults to *Profit Center* with no position |
 | | *Field B: position*, *Field B: name* | Same, defaults to *Business Area* |
@@ -81,7 +82,7 @@ Both positions blank is legitimate: the report then compares everything and list
 
 ### Columns
 
-One row per posting key found on either side. *Here* is the client the report runs in; *there* is the client behind the destination.
+One row per posting key found on either side. *Here* is the client the report runs in; *there* is the other client, by number or behind the destination.
 
 | Column | What it holds |
 | :-- | :-- |
@@ -94,7 +95,7 @@ One row per posting key found on either side. *Here* is the client the report ru
 
 ### How it reads the other client
 
-Locally, a `SELECT` on `TBSL`. Remotely, `RFC_READ_TABLE` — which returns each row as one 512-character line and, in its `FIELDS` table, the offset and length at which every requested field sits. The report slices by those offsets rather than asking for a delimiter, so the **trailing blanks** of `FAUS1` and `FAUS2` survive; a delimited read would trim them and shift nothing, but it would turn *(blank)* positions into *absent* ones. A `TBSL` row is well under the 512-character limit.
+Locally, a `SELECT` on `TBSL`. **Another client of the same system:** the same `SELECT` with `USING CLIENT`, because `TBSL` is client-dependent and its rows for every client sit in the same database table — this is what makes the golden-client comparison a two-minute job with no destination. **Another system:** `RFC_READ_TABLE` — which returns each row as one 512-character line and, in its `FIELDS` table, the offset and length at which every requested field sits. The report slices by those offsets rather than asking for a delimiter, so the **trailing blanks** of `FAUS1` and `FAUS2` survive; a delimited read would trim them and shift nothing, but it would turn *(blank)* positions into *absent* ones. A `TBSL` row is well under the 512-character limit.
 
 The remote side needs nothing installed: only a user who may call `RFC_READ_TABLE` and display `TBSL`. Run the report the other way round — from the other client against this one — as a cross-check: the differing positions must come out identical.
 
@@ -102,8 +103,8 @@ The remote side needs nothing installed: only a user who may call `RFC_READ_TABL
 
 1. `SE38`: create an executable program and paste the [source](z_adam_posting_key_compare.abap). Rename to your convention.
 2. Activate. No text elements need maintaining: frame titles and selection texts are set at `INITIALIZATION` — the same technique as the [exchange rate report](../exchange_rates/exchange_rate_check_report.md#installing-it), with the same caveat that the generated `%_<name>_%_app_%-text` fields are widely used but not documented.
-3. An RFC destination (`SM59`, an ABAP connection) to the other client. For **another client of the same system**, the destination points at the same host and system number with the other client number and a user there. Basis usually owns these; ask for one per client you compare against.
-4. The user in the destination needs to call `RFC_READ_TABLE` (an `S_RFC` authorization for the function's group — `SE37` shows which) and to display `TBSL` (`S_TABU_DIS` for its authorization group, or `S_TABU_NAM` for the table).
+3. For another client of the same system: nothing more. Enter the client number.
+4. For another system only: an RFC destination (`SM59`, an ABAP connection) to a client there. Basis usually owns these. The user in the destination needs to call `RFC_READ_TABLE` (an `S_RFC` authorization for the function's group — `SE37` shows which) and to display `TBSL` (`S_TABU_DIS` for its authorization group, or `S_TABU_NAM` for the table).
 
 ## What the first run got wrong
 
@@ -132,6 +133,7 @@ If the question behind the comparison is *"which client is right?"*, the transpo
 | The position is the same for every posting key | Run the position trick on two keys; both name the same number |
 | `T004F` uses the same layout | `SE11`: compare the data elements of `TBSL-FAUS1` and `T004F-FAUS1`; then the position trick in `OBC4` on one group |
 | Key and account group combine as described | `FB01`: a key with the profit center optional against an account whose group requires it, and the reverse |
+| `USING CLIENT` reads another client's rows | `SE16` on `TBSL` in the other client, one key, against the report's *there* columns for that key |
 | `RFC_READ_TABLE` returns offsets and lengths | `SE37`, test run with `QUERY_TABLE` = `TBSL` and one field in `FIELDS`: the table comes back with offset and length filled |
 | `SCMP` compares a table across a destination | `SCMP` with `TBSL` and the destination: rows and differing fields, with `FAUS1` shown whole |
 | A trailing blank in `FAUS1` is a position the screen does not use | `SE16` on `TBSL` with the string shown in full: the used positions end before the field does |
@@ -141,4 +143,5 @@ If the question behind the comparison is *"which client is right?"*, the transpo
 - Written **24 September 2026** from experience with the module. **Nothing on this page is confirmed against a named system.** Field and table names are given because they are the stable core; message texts, menu paths and the columns of the `TMOD*` tables are deliberately not quoted.
 - The report was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **It activated without correction on 24 September 2026** on an S/4HANA system (ID withheld — public page), and its first run terminated in the text read with the duplicate key described above. The corrected version has been parsed but, as of this writing, **not yet re-run**; the comparison itself and the RFC read are therefore still unconfirmed against a system. This page will say so when they have run.
 - The three status characters and the combination rule are as remembered; the verification table names the check for each. If your system shows a fourth character, the report prints it in quotes rather than guessing.
-- `RFC_READ_TABLE` is a standard function and in some landscapes its use is restricted by policy rather than by authorization. If it is, the download-and-decode route needs no function at all.
+- `RFC_READ_TABLE` is a standard function and in some landscapes its use is restricted by policy rather than by authorization. If it is, the download-and-decode route needs no function at all — and a comparison inside one system never touches it.
+- The client-number option was added after the first run, on request, so that a comparison with the golden client needs no destination. It has been parsed, not yet run.
