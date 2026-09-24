@@ -14,7 +14,7 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 
 | Area | What's in it |
 | :-- | :-- |
-| [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates |
+| [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates · posting keys |
 | [02_Master_Data — Master data](02_Master_Data/README.md) | Addresses: the postal code check per country |
 
 ### Payments, clearing and intercompany
@@ -36,6 +36,10 @@ A three-page sequence, in reading order:
 - [How a posting picks its exchange rate](01_FI/exchange_rates/how_a_posting_picks_its_rate.md) — the latest `TCURR` entry on or before the translation date, however old; the inverted date; and the rate type with a reference currency, which reads `EUR → USD` and `CAD → USD` and ignores the `EUR → CAD` you maintained.
 - [A report that shows which rate a posting would get](01_FI/exchange_rates/exchange_rate_check_report.md) — read-only ABAP, built on the standard lookup: rates on a key date with their age, history with gaps, posted documents against the table rate. Includes the five assumptions its first runs proved wrong.
 - [Test scenarios for foreign currency postings from an interface](01_FI/exchange_rates/testing_foreign_currency_postings.md) — the same amount in two months, the month boundary, rounding both ways, the missing rate, and the month that is not loaded yet. Anonymized.
+
+### Posting keys
+
+- [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) — `OB41` is one row of `TBSL` per client, and the field status is two strings with one character per field; `SCMP` says *that* the string differs, and only decoding a position says whether it is the profit center. Three routes compared, a read-only report that decodes two chosen fields across an RFC destination and lists every differing position, the trick that finds a field's position in one run, and the other three inputs that decide whether Profit Center and Business Area are required.
 
 ### Addresses
 

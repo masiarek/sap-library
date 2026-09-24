@@ -26,6 +26,12 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 | [A report that shows which rate a posting would get](exchange_rates/exchange_rate_check_report.md) | A read-only ABAP report: rates on a key date with their age, history with gaps, posted documents against the table rate. |
 | [Test scenarios for foreign currency postings from an interface](exchange_rates/testing_foreign_currency_postings.md) | Same amount in two months, month boundary, rounding, missing rate, month not loaded — with reference rates that make the expected cent unambiguous. |
 
+## [Posting keys](posting_keys/README.md)
+
+| Page | What it answers |
+| :-- | :-- |
+| [Comparing posting keys between clients](posting_keys/comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key and why its field status is two character strings; `SCMP` and a download against a read-only report that decodes Profit Center and Business Area on both sides of an RFC destination; how to find a field's position once; and what else decides whether the field is required. |
+
 ## Recurring themes across these pages
 
 - **The subledger sign is data, not logic.** `BSEG-SHKZG` is set by the posting key when the document is posted. Programs read it; they don't derive it.
@@ -33,4 +39,5 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 - **Global object, local behaviour.** A document type is defined once for the client; its number range intervals are per company code and per fiscal year. Most multi-country numbering problems are solved at the interval, not by minting new document types.
 - **"Clearing job" is ambiguous.** F110 moves cash; F.13 only matches. Half the confusing questions in this area come from the two being called the same thing.
 - **Existence is checked, currency is not.** The rate lookup takes the latest entry on or before the translation date and never asks how old it is. A late monthly load, or a test system with one ancient rate, produces documents — just not the ones you expected.
+- **A posting key is a row per client, and its field status is a string.** `TBSL` carries the client in its key, and the suppressed/required/optional choices live as one character per field in `FAUS1`/`FAUS2`. A table comparison sees the string as one field; only decoding a position says whether the profit center is what changed.
 - **Intercompany doubles everything.** Two books, two documents, one economic fact. Most intercompany pain is the cost of keeping those two views equal.

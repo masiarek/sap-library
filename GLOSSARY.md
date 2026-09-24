@@ -14,6 +14,8 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | `LFA1-KUNNR` / `KNA1-LIFNR` | The cross-links pairing a vendor with a customer. Necessary but not sufficient for netting — the `XVERR` flags are the other half. | [F110 debit vs credit §5](01_FI/payments/f110_debit_vs_credit.md) |
 | `LFB1-GRUPP` | Payment grouping key. Shapes how open items are gathered into one payment. | [F110 debit vs credit §2](01_FI/payments/f110_debit_vs_credit.md) |
 | `LFB1-XPORE` | *Individual payment* — forces one payment per item instead of a netted group. | [F110 debit vs credit §2](01_FI/payments/f110_debit_vs_credit.md) |
+| `TBSL` / `TBSLT` | Posting keys and their texts, one row per client. `SHKZG`, `KOART`, `STBSL` and the flags are fields; the field status is not. | [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) |
+| `TBSL-FAUS1` / `FAUS2` | The posting key's field status: one character per screen field, `-` suppressed, `+` required, `.` optional, the second string continuing the first. `T004F` (field status groups) uses the same layout. | [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) |
 
 ## Transactions
 
@@ -24,6 +26,9 @@ Field names, abbreviations, and terms that carry a specific meaning in SAP FI. E
 | `FBZP` | Payment program configuration — paying company codes, payment methods (including the outgoing/incoming direction), bank determination. | [F110 debit vs credit §4](01_FI/payments/f110_debit_vs_credit.md) |
 | `OBYA` | Cross-company-code clearing accounts — the due-to/due-from pair used when one company code pays on behalf of another. | [F110 debit vs credit §8](01_FI/payments/f110_debit_vs_credit.md) |
 | `F-44` / `F-32` | Manual clearing, vendor and customer. Their *other account* selection honours the same `XVERR` flags F110 does. | [F110 debit vs credit §5](01_FI/payments/f110_debit_vs_credit.md) |
+| `OB41` | Posting key maintenance — the row in `TBSL`, including its field status. | [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) |
+| `OBC4` | Field status groups (`T004F`) — the account-side half of the field status a posting meets. | [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) |
+| `SCMP` / `SCU0` | Standard comparison of a table or view, or of whole Customizing areas, across an RFC destination. Reports a differing row and field; does not decode a field status string. | [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) |
 
 ## Terms
 

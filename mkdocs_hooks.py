@@ -59,7 +59,7 @@ FIXUPS = {
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
     ".": ["01_FI", "02_Master_Data"],
-    "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates"],
+    "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates", "posting_keys"],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
         "intercompany_settlement_worked_example.md",
@@ -69,6 +69,9 @@ NAV_ORDER: dict[str, list[str]] = {
         "how_a_posting_picks_its_rate.md",
         "exchange_rate_check_report.md",
         "testing_foreign_currency_postings.md",
+    ],
+    "01_FI/posting_keys": [
+        "comparing_posting_keys_between_clients.md",
     ],
     "02_Master_Data": ["addresses"],
     "02_Master_Data/addresses": [
