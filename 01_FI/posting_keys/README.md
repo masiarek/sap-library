@@ -5,7 +5,7 @@ What a posting key carries, where it lives per client, and how to see — per po
 | Page | What it answers |
 | :-- | :-- |
 | [Comparing posting keys between clients](comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key, why the field status is two character strings, the three ways to compare clients and what each one can and cannot tell you, and what else decides whether Profit Center and Business Area are required. |
-| [`z_adam_posting_key_status.abap`](z_adam_posting_key_status.abap) | The report: every posting key of the client you are in, with Profit Center and Business Area decoded to required / optional / suppressed. Looks the positions up in the field-selection definition itself; run it in each client to compare. Read-only. |
+| [`z_adam_posting_key_status.abap`](z_adam_posting_key_status.abap) | The report: client, posting key, and Business Area, Profit Center and Segment as required / optional / suppressed. Looks the positions up in the field-selection definition itself; run it in each client to compare. Read-only. |
 
 ## The one distinction to carry away
 

@@ -1,6 +1,6 @@
 # Comparing posting keys between clients
 
-**Level: 201 · for FI consultants and the ABAP developer they borrow** — where a posting key is stored, what a comparison tool can and cannot see in it, and a read-only report that shows, for every posting key of the client you are in, whether two chosen fields (Profit Center and Business Area by default) are suppressed, required or optional.
+**Level: 201 · for FI consultants and the ABAP developer they borrow** — where a posting key is stored, what a comparison tool can and cannot see in it, and a read-only report that lists, for every posting key of the client you are in, whether Business Area, Profit Center and Segment are suppressed, required or optional.
 
 **One line:** A posting key is one row of `TBSL` per client, and its field status is two character strings inside that row. A standard table comparison tells you *that* the string differs between clients; only decoding a position tells you *whether it is the profit center* — so the useful unit of work is a list of decoded statuses per client, which can then be compared like any other list.
 
@@ -50,7 +50,7 @@ Two consequences that shape everything below:
 | :-- | :-- | :-- | :-- |
 | **Standard comparison**: `SCMP` (view/table comparison) with table `TBSL` and an RFC destination; `SM30` offers the same comparison from its menu; `SCU0` (once `OY19`) does the same for whole IMG areas or a transport request's objects | An RFC destination to the other client (`SM59`), and a user there allowed to display the table | Which posting keys exist on one side only, and which rows differ, field by field — `FAUS1` counted as one field | First pass: *is anything different at all?* — and for comparing an entire FI area after a transport or a refresh |
 | **Download and decode**: `SE16N` (or `SE16`) on `TBSL` in each client, export, decode the two positions with `MID()` in a spreadsheet | A logon in each client, nothing else | Profit center and business area status per key on each side | A client you can reach but where you cannot create a program |
-| **The report below**, run in each client: `Z_ADAM_POSTING_KEY_STATUS` | `SE38` in the client | The decoded status of both fields per key, already in words — export the list from each client and put the two side by side | Whenever the question is about specific fields, and whenever it will be asked again |
+| **The report below**, run in each client: `Z_ADAM_POSTING_KEY_STATUS` | `SE38` in the client | Client, posting key, and the status of Business Area, Profit Center and Segment in words — export the list from each client and put the two side by side | Whenever the question is about specific fields, and whenever it will be asked again |
 
 The standard route and the report are not rivals. `SCMP` on `TBSL` answers *"did the transport arrive?"* in a minute. The report answers *"is the profit center required here?"*, which `SCMP` cannot, and it answers it for fifty posting keys at once.
 
@@ -58,47 +58,55 @@ The standard route and the report are not rivals. `SCMP` on `TBSL` answers *"did
 
 ### What it shows
 
-One row per posting key of the client you are logged on to:
+One row per posting key of the client you are logged on to, five columns:
 
 | Column | What it holds |
 | :-- | :-- |
-| Posting key, Name | `BSCHL` and its text in your logon language |
-| *Profit Center*, *Business Area* | `required`, `optional`, `suppressed`, or `(blank)` for a position the strings do not use. `?` means the position is not known — see the next section |
-| Account type, D/C, Reversal key, Special G/L, Sales-related, Payment transaction | The rest of the row |
-| `FAUS1|FAUS2` | The raw strings, for reading a status the two decoded columns do not cover |
+| Client | `sy-mandt`, so that lists exported from several clients can be stacked |
+| Posting key | `BSCHL` |
+| *Business Area*, *Profit Center*, *Segment* | `required`, `optional`, `suppressed`, or `(blank)` for a position the strings do not use. `?` means the position is not known — see the next section |
+
+*More columns* adds the name, account type, D/C, reversal key, the three flags and the raw `FAUS1|FAUS2` strings.
 
 ### How it finds the positions
 
-It does not hard-code them. With the position fields left at 0 it reads the field-selection definition tables — `TMODU` and its siblings — **dynamically**: each table is read as a whole, every row is flattened to text, and a row counts when it mentions the field name (`PRCTR`, `GSBER`). The short numbers such a row carries are the position candidates. When every matching row agrees on one number, that number is used and the list shows the statuses straight away.
+It does not hard-code them. With the position fields left at 0 it reads the field-selection definition table `TMODU` (and its siblings, if present) **dynamically**: the table is read as a whole, every row is flattened to text with `|` between the columns, and a row counts when it belongs to the FI document's field selection — the rows whose first column is `SKB1-FAUS1` — and names the field (`GSBER`, `PRCTR`, `SEGMENT`) as a whole column value. The short numbers such a row carries are the position candidates. When every matching row agrees on one number, that number is used and the list shows the statuses straight away.
 
-When they do not agree, or no row matches, the report first displays the matching definition rows — table, which field they matched, the candidate number, every number in the row, and the row's content — so that the position can be read off and entered on the selection screen. *Show the definition rows* forces that display even when the lookup succeeded, which is how you check that it picked the right number.
+On the system it ran on, the rows looked like this (client, table and flag columns as shown by the report):
 
-Reading the tables dynamically is deliberate: their layout is not asserted anywhere in the program, so it activates whatever the release, and the page does not have to vouch for their columns.
+```text
+SKB1-FAUS1|033|BSEG|GSBER|D||X
+SKB1-FAUS1|042|BSEG|PRCTR|S||X
+```
+
+— one row per account type, all with the same number, so **Business Area is position 33 and Profit Center position 42** there. The same table also holds other applications' field selections with their own numbering; Real Estate (`TIV01-AUSWA`) puts its profit center at 29, which is why the lookup is restricted to `SKB1-FAUS1` and why the field name must match a whole column and not a substring (`PSEGMENT` and `PPRCTR`, the partner fields, would otherwise match).
+
+When the rows do not agree, or none matches, the report first displays them — table, field, candidate number, every number in the row, and the row's content — so that the position can be read off and entered on the selection screen. *Show the definition rows* forces that display even when the lookup succeeded, which is how you check that it picked the right number.
+
+Reading the table dynamically is deliberate: its layout is not asserted anywhere in the program, so it activates whatever the release, and the page does not have to vouch for its columns beyond what a run displayed.
 
 ### Selection screen
 
 | Block | Parameter | Meaning |
 | :-- | :-- | :-- |
 | Posting keys | *Posting key* | Restrict to some keys; blank means all |
-| Fields to decode | *Field A: name*, *field name to look up*, *position* | The name the list uses (default *Profit Center*), the field name searched in the definition (default `PRCTR`), and the position, 0 to look it up |
-| | *Field B: ...* | Same, defaults *Business Area* and `GSBER` |
-| Output | *Show raw status strings* | Add the `FAUS1|FAUS2` column |
+| Positions (0 = look up) | *Field selection* | The field selection name the lookup is restricted to; `SKB1-FAUS1` is the FI document's |
+| | *Business Area position*, *Profit Center position*, *Segment position* | 0 to look up; a number overrides the lookup for that field |
+| Output | *More columns* | Name, attributes and raw strings |
 | | *Show the definition rows* | Display what the lookup found before the list |
-
-Any two fields of the field status can be decoded by changing the field names — `KOSTL` for the cost center, `AUFNR` for the order, and so on.
 
 ### Checking a position independently
 
 Two ways, neither needing the definition tables:
 
 1. **Against the screen.** Open one posting key in `OB41`, *Maintain Field Status*, and read the profit center's radio button. The report's column for that key must say the same. Do it for a key where the field is *not* optional, so that a wrong position is unlikely to agree by chance.
-2. **By changing one field in a sandbox.** Set Profit Center to *required* on one posting key in a sandbox client, then read that key's `FAUS1` and `FAUS2` in `SE16` before and after: the character that changed is the position. The report's *raw strings* column shows the same strings.
+2. **By changing one field in a sandbox.** Set Profit Center to *required* on one posting key in a sandbox client, then read that key's `FAUS1` and `FAUS2` in `SE16` before and after: the character that changed is the position. The report's raw strings column (under *More columns*) shows the same strings.
 
 ### Installing it
 
 1. `SE38`: create an executable program and paste the [source](z_adam_posting_key_status.abap). Rename to your convention.
 2. Activate. No text elements need maintaining: frame titles and selection texts are set at `INITIALIZATION` — the same technique as the [exchange rate report](../exchange_rates/exchange_rate_check_report.md#installing-it), with the same caveat that the generated `%_<name>_%_app_%-text` fields are widely used but not documented.
-3. Run it. Nothing else: it reads `TBSL`, `TBSLT` and the definition tables of the client you are in.
+3. Run it with the defaults. Nothing else: it reads `TBSL`, `TBSLT` and the definition table of the client you are in.
 
 ## What the first runs got wrong
 
@@ -107,6 +115,8 @@ Recorded here in the spirit of the [exchange rate report](../exchange_rates/exch
 **1. `TBSLT` is not one row per language and posting key.** The first run ended in a short dump on the text read — a duplicate key while filling a unique table, on posting key `09`. That key is the customer special G/L debit, and `TBSLT` keeps one text for it per special G/L indicator, so the table has a third key field and the block insert met the same posting key twice. *Fix:* read the texts in primary key order, which puts the blank indicator first, and insert them one row at a time — a single-row insert on an existing key sets `sy-subrc` to 4 and keeps the first text instead of terminating. The posting key rows in `TBSL` are not affected: that table's key is client and posting key only.
 
 **2. A position nobody knows is a status nobody sees.** The second run listed every posting key with the two status columns empty, because the first version expected the positions to be entered and offered a trick for finding them that needed a second client. *Fix:* the report looks the positions up itself, in the definition tables, and shows what it found when the lookup is not unambiguous. The same evening the cross-client comparison the report had started as was dropped: the question was about the current client, and a list per client compares well enough.
+
+**3. The definition table serves more than FI.** The third run found Business Area at 33 without doubt and refused to name a position for Profit Center: the FI rows all said 42, and one Real Estate row said 29. The lookup had matched any row mentioning the field. *Fix:* restrict the rows to the field selection asked for (`SKB1-FAUS1`), and match the field name as a whole column value, so that the partner fields `PSEGMENT` and `PPRCTR` cannot widen the search again once Segment was added to the list.
 
 ## What else decides whether Profit Center and Business Area are required
 
@@ -137,5 +147,5 @@ If the question behind a comparison is *"which client is right?"*, the transport
 ## Provenance and caveats
 
 - Written **24 September 2026** from experience with the module. Field and table names are given because they are the stable core; message texts, menu paths and the columns of the `TMOD*` tables are deliberately not quoted — the report reads those tables without assuming any column.
-- The program was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **The first version activated without correction on 24 September 2026** on an S/4HANA system (ID withheld — public page); its first run dumped on the `TBSLT` read, and its second run listed all posting keys with empty status columns, which is what led to the position lookup. **The version with the lookup has been parsed but not yet run**; whether the definition tables yield an unambiguous position on that release is the open question, and this page will record the answer.
+- The program was parsed and syntax-checked with `abaplint` (release 7.58 syntax) before every version. **Activated and run on an S/4HANA system on 24 September 2026** (ID withheld — public page), three runs: the first dumped on the `TBSLT` read; the second listed all posting keys with empty status columns; the third, with the lookup, displayed the `TMODU` rows quoted above and named 33 for Business Area. **Confirmed against that system:** `TMODU` exists, is readable, and holds `SKB1-FAUS1` rows with `033` for `GSBER` and `042` for `PRCTR`. **Not yet run:** the version with the `SKB1-FAUS1` restriction, whole-column matching and the Segment column; that Segment has a row of its own in the definition is expected, not yet seen.
 - The three status characters and the combination rule are as remembered; the verification table names the check for each. If your system shows a fourth character, the report prints it in quotes rather than guessing.
