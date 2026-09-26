@@ -7,7 +7,9 @@ An amount in SAP is a packed decimal with the decimals of its currency, and
 every conversion rounds *commercially*: half away from zero, to the target
 currency's decimals. Python's default is banker's rounding, and a float is
 not a decimal at all, so a program that reproduces SAP's numbers has to say
-so explicitly. The rest of the program is about what rounding leaves behind:
+so explicitly. (The float section adds 0.01 in a loop rather than with sum(),
+because Python 3.12's sum() quietly compensates float rounding error and
+would hide the point on newer interpreters.) The rest of the program is about what rounding leaves behind:
 a total split across lines that no longer adds up, a rule that rounds Swiss
 francs to five centimes, and the size of the amount field itself.
 
@@ -70,8 +72,11 @@ def main() -> None:
     print()
 
     print("5. FLOAT IS THE WRONG TYPE FOR MONEY")
+    running = 0.0
+    for _ in range(100):
+        running += 0.01          # accumulated one at a time, as a ledger would
     print(f"   0.1 + 0.2 == 0.3                 {0.1 + 0.2 == 0.3}")
-    print(f"   sum of 0.01 a hundred times      {sum([0.01] * 100)!r}")
+    print(f"   0.01 added a hundred times       {running!r}")
     print(f"   Decimal('0.01') * 100            {D('0.01') * 100}")
     print("   ABAP's type P (packed) and DECFLOAT34 are decimal; type F is binary floating point,")
     print("   which is why CURR fields are packed and why a float in an amount calculation is a defect.")

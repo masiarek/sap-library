@@ -70,7 +70,7 @@ Where a rounding difference *is* posted to an account:
 
 5. FLOAT IS THE WRONG TYPE FOR MONEY
    0.1 + 0.2 == 0.3                 False
-   sum of 0.01 a hundred times      1.0000000000000007
+   0.01 added a hundred times       1.0000000000000007
    Decimal('0.01') * 100            1.00
    ABAP's type P (packed) and DECFLOAT34 are decimal; type F is binary floating point,
    which is why CURR fields are packed and why a float in an amount calculation is a defect.
