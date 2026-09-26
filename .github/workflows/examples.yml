@@ -1,0 +1,28 @@
+# Every example must run and print exactly what its recorded .out file says — and
+# every lesson page's generated output block must match that run.
+#
+# This is what makes the library trustworthy: a page cannot claim a program
+# prints something it does not print, and code cannot rot quietly while the prose
+# keeps describing the old behaviour.
+#
+# No dependency install step, deliberately: the examples are stdlib-only, so the
+# job runs on the Python the runner already has. If this ever needs a `pip
+# install`, an example has broken the rule.
+
+name: examples
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: python3 --version
+      - name: Run every example and check it against its answer key
+        run: python3 tools/run_examples.py --check

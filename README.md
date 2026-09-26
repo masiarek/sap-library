@@ -16,6 +16,7 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 | :-- | :-- |
 | [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates · posting keys |
 | [02_Master_Data — Master data](02_Master_Data/README.md) | Addresses: the postal code check per country |
+| [03_Currency — Currencies in SAP](03_Currency/README.md) | Keys and decimals · currency types · parallel currencies · exchange rates · the update currency · valuation · the Universal Journal, ledgers and UPA · CO, ML and group currency · ABAP · payments · troubleshooting |
 
 ### Payments, clearing and intercompany
 
@@ -40,6 +41,15 @@ A three-page sequence, in reading order:
 ### Posting keys
 
 - [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) — `OB41` is one row of `TBSL` per client, and the field status is two strings with one character per field; `SCMP` says *that* the string differs, and only decoding a position says whether it is the profit center. Three routes compared, a read-only report that lists Business Area, Profit Center and Segment as required / optional / suppressed per posting key and looks their positions up in the field-selection definition itself, and the other three inputs that decide whether Profit Center and Business Area are required.
+
+### Currencies
+
+A chapter of twenty pages in four movements, with seven small programs that reproduce the arithmetic; the map is [Currencies in SAP](03_Currency/README.md).
+
+1. **The objects** — [currency keys, codes and decimal places](03_Currency/currency_keys_and_decimals/README.md) (why 1,000 JPY is stored as 10.00), [currency types](03_Currency/currency_types/README.md), [local and parallel currencies](03_Currency/local_and_parallel_currencies/README.md), [exchange rates](03_Currency/exchange_rates/README.md).
+2. **One line item in the G/L** — the [update currency, `BSEG-PSWSL` and `PSWBT`](03_Currency/update_currency_pswsl/README.md), the indicator [*only balances in local currency*](03_Currency/only_balances_in_local_currency/README.md) with one open item cleared at two rates, [exchange rate differences on clearing](03_Currency/exchange_rate_differences_on_clearing/README.md), [foreign currency valuation and translation](03_Currency/foreign_currency_valuation/README.md).
+3. **The whole system** — [currencies in the Universal Journal](03_Currency/universal_journal_currencies/README.md) and the SAP Note 2344012 process matrix, [ledgers and `FINSC_LEDGER`](03_Currency/ledgers_and_currencies/README.md), [Universal Parallel Accounting](03_Currency/universal_parallel_accounting/README.md), [Controlling](03_Currency/controlling_currencies/README.md), the [Material Ledger](03_Currency/material_ledger_currencies/README.md), [group currency and translation](03_Currency/group_currency_and_translation/README.md).
+4. **The practical side** — [rounding and the amount field](03_Currency/rounding_and_amount_fields/README.md), [currencies in ABAP](03_Currency/abap_currency_handling/README.md), [payments and currency management](03_Currency/payments_and_currency_management/README.md), [reporting and troubleshooting](03_Currency/reporting_and_troubleshooting/README.md), [introducing, changing and retiring currencies](03_Currency/introducing_and_changing_currencies/README.md), and the [resources](03_Currency/resources/README.md): SAP Notes, help pages, book chapters and articles.
 
 ### Addresses
 

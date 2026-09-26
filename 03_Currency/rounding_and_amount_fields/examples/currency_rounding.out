@@ -1,0 +1,42 @@
+1. COMMERCIAL ROUNDING IS NOT PYTHON'S DEFAULT
+   value     Python round()   Decimal HALF_EVEN   SAP (HALF_UP, away from zero)
+   2.345           2.35            2.34            2.35
+   2.355           2.35            2.36            2.36
+   -2.345         -2.35           -2.34           -2.35
+   0.125           0.12            0.12            0.13
+   Two of the four disagree. A report that re-derives a posted amount in another
+   language will be a cent off exactly on the halves.
+
+2. ROUND TO THE CURRENCY'S DECIMALS, NOT TO TWO
+       1234.5 ->       1235 JPY   (0 decimals)
+      1.23456 ->      1.235 KWD   (3 decimals)
+        0.005 ->       0.01 EUR   (2 decimals)
+
+3. A ROUNDING RULE PER CURRENCY (OB90): CHF TO THE NEAREST 0.05
+     12.32 CHF ->   12.30 CHF
+     12.33 CHF ->   12.35 CHF
+     12.37 CHF ->   12.35 CHF
+     12.38 CHF ->   12.40 CHF
+     -7.11 CHF ->   -7.10 CHF
+   Used for cash payments and invoices where the smallest coin is five centimes; the
+   difference goes to the rounding differences account.
+
+4. SPLIT A TOTAL OVER LINES AND THE PARTS NO LONGER ADD UP
+   100.00 EUR over 3 lines: each 33.33, sum 99.99, short by 0.01
+   The same thing happens to a document translated line by line into a parallel currency:
+   lines 33.33, 33.33, 33.34 EUR x 1.0875 -> 36.25, 36.25, 36.26 USD, sum 108.76;
+   the total converted at once is 108.75. Difference: -0.01.
+   The accounting interface puts that cent on one line so the entry balances in USD too.
+
+5. FLOAT IS THE WRONG TYPE FOR MONEY
+   0.1 + 0.2 == 0.3                 False
+   sum of 0.01 a hundred times      1.0000000000000007
+   Decimal('0.01') * 100            1.00
+   ABAP's type P (packed) and DECFLOAT34 are decimal; type F is binary floating point,
+   which is why CURR fields are packed and why a float in an amount calculation is a defect.
+
+6. THE AMOUNT FIELD HAS A SIZE
+   ECC      CURR length 13, 2 decimals: up to 99,999,999,999.99 in the currency's units
+   S/4HANA  CURR length 23, 2 decimals: up to 999,999,999,999,999,999,999.99   (amount field length extension)
+   For a 0-decimal currency the stored value is divided by 100, so the ceiling in JPY is
+   9,999,999,999,999 JPY in ECC. Hyperinflation currencies are where it used to bind.

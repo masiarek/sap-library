@@ -37,10 +37,34 @@ Where classic master-data transactions have been replaced by business partner ma
 - Sidebar order is set in `mkdocs_hooks.py` (`NAV_ORDER`), **never** by renumbering files. A filename is a permanent URL; inserting a lesson should not move every page after it.
 - Link a folder by naming its README (`[FI](01_FI/README.md)`), not with a bare folder path — MkDocs leaves a bare folder link untouched and it 404s on the published site.
 
+## Program output is generated, never typed
+
+Some pages (the currency chapter) back their arithmetic with a small Python program in an `examples/` folder beside the page: stdlib only, deterministic, written to be read aloud. The page marks the spot and `tools/run_examples.py` pastes what the program actually printed, with a provenance line above the fence:
+
+```markdown
+<!-- output:xsalh_clearing -->
+<!-- /output -->
+```
+
+Inside the markers is generated; outside is yours. The recorded output (`<stem>.out`) is the answer key, and CI fails if the program, the key and the page drift apart. Stems are named bare in the markers, so they must be unique across the repo.
+
+```bash
+python3 tools/run_examples.py            # verify + refill the pages
+python3 tools/run_examples.py --update   # record current output as the answer key
+python3 tools/run_examples.py --check    # write nothing, fail on drift (CI)
+```
+
 ## Building the site locally
 
 ```bash
 uv run --group docs mkdocs serve
+```
+
+Before committing, run both checks CI runs:
+
+```bash
+python3 tools/run_examples.py --check
+uv run --group docs mkdocs build --strict
 ```
 
 The docs root is the repo root (`mkdocs-same-dir`), so there is no `docs/` copy step: the Markdown GitHub renders is exactly what the site serves. `site/` is generated output — never commit it.

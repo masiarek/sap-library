@@ -1,0 +1,52 @@
+1. THE OPEN ITEM AND THE RATES
+   vendor invoice 10,000 USD at 0.90 = 9000.00 EUR (BSEG-DMBTR), open until April
+   closing rates: 31.01 0.92, 28.02 0.88, 31.03 0.91;  paid 10.04 at 0.89
+   For a liability, a higher EUR value is a loss and a lower one is a gain.
+
+2. VALUATION WITH RESET (POST ON THE KEY DATE, REVERSE ON THE NEXT DAY)
+   Each run compares the closing value with the ORIGINAL amount, because the previous
+   valuation was reversed on the first day of the period.
+   key date   closing value   vs original   posting on key date            reversed on
+   31.01        9200.00 EUR     +200.00     unrealized loss   200.00 EUR   next day
+   28.02        8800.00 EUR     -200.00     unrealized gain   200.00 EUR   next day
+   31.03        9100.00 EUR     +100.00     unrealized loss   100.00 EUR   next day
+   Accounts (OBA1, transaction KDF for the reconciliation account): the P&L side goes to
+   the unrealized loss / gain account, the balance-sheet side to the adjustment account,
+   so the vendor account itself is never touched.
+
+3. VALUATION WITH DELTA LOGIC (NO REVERSAL; POST ONLY THE CHANGE)
+   Each run compares the closing value with the LAST VALUATED amount; the item keeps a
+   running valuation difference (BSEG-BDIFF in classic terms).
+   key date   closing value   last valued   delta posted   cumulative BDIFF
+   31.01        9200.00 EUR     9000.00       +200.00        +200.00
+   28.02        8800.00 EUR     9200.00       -400.00        -200.00
+   31.03        9100.00 EUR     8800.00       +300.00        +100.00
+   Same balance-sheet value at every key date as in section 2; fewer postings, and the
+   difference stays on the item until it is cleared.
+
+4. THE LOWEST VALUE PRINCIPLE: ONLY VALUATE IN THE DIRECTION OF PRUDENCE
+   For a liability, 'lowest value' means: post the loss, never the gain (the liability
+   may go up in the books, not down). 'Always valuate' posts both directions.
+   key date   diff vs original   always valuate   lowest value principle
+   31.01        +200.00            +200.00           +200.00
+   28.02        -200.00            -200.00                +0
+   31.03        +100.00            +100.00           +100.00
+   'Strict lowest value' adds: once written up, do not write back down below the
+   original in later runs either. 'Revalue only' is the mirror for assets.
+
+5. PAYMENT ON 10.04 AT 0.89: THE REALIZED DIFFERENCE, AND THE LIFETIME P&L
+   paid 8900.00 EUR for an item booked at 9000.00 EUR: realized gain 100.00 EUR
+   Under reset, the March valuation was already reversed on 01.04, so the realized line
+   is the whole story: -100.00 EUR gain to the realized gain account (KDF).
+   Under delta logic, the item still carries BDIFF +100.00 from March; clearing reverses
+   that (+100.00 back out of unrealized) and posts the realized -100.00.
+   lifetime P&L, any method:  payment - original = 8900.00 - 9000.00 = -100.00 EUR
+
+6. TRANSLATION IS NOT VALUATION
+   Valuation restates ITEMS in a foreign currency into the local currency (FAGL_FC_VAL).
+   Translation restates whole BALANCES from the local currency into another currency
+   (FAGL_FC_TRANS, or the group's consolidation), with different rates per account type:
+     liability 9100.00 EUR at closing rate 1.12 = 10192.00 USD group currency
+     expense   9000.00 EUR at average rate 1.08 = 9720.00 USD group currency
+   The two rates leave a gap that is not anyone's gain or loss: the translation difference,
+   which goes to equity (the currency translation adjustment).
