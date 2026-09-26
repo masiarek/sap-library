@@ -1,0 +1,40 @@
+1. A RATE IS PICKED BY VALID-FROM DATE: THE LATEST ROW NOT AFTER THE TRANSLATION DATE
+   1,000.00 USD on 2017-04-05:    930.00 EUR   rate 0.93000   <- row 2017-04-01 rate 0.93000 (1:1)
+   1,000.00 USD on 2017-04-20:    920.00 EUR   rate 0.92000   <- row 2017-04-20 rate 0.92000 (1:1)
+   1,000.00 USD on 2017-04-30:    920.00 EUR   rate 0.92000   <- row 2017-04-20 rate 0.92000 (1:1)
+   The translation date is BKPF-WWERT; it defaults to the posting date and can be entered.
+
+2. THE RATIO FROM TCURF IS PART OF THE RATE
+   TCURR says JPY->EUR = 0.83000, TCURF says the ratio is 100 : 1, so 100 JPY = 0.83 EUR.
+   100,000 JPY = 830.00 EUR   (per-unit rate 0.00830)   <- row 2017-04-01 rate 0.83000 (100:1)
+   Read 0.83000 without the ratio and 100,000 JPY becomes 83,000 EUR. OB08 shows the
+   ratio next to the rate for exactly this reason.
+
+3. NO ROW FOR THE PAIR: THE INVERSE OF THE OPPOSITE ROW, IF THE RATE TYPE ALLOWS IT
+   1,000.00 EUR -> 1086.96 USD   rate 1.08696
+   <- inverse of USD->EUR: row 2017-04-20 rate 0.92000 (1:1)
+   Rate type M has 'inverse' allowed in OB07 (TCURV). Without it this lookup fails with
+   'exchange rate not maintained' even though the opposite direction exists.
+
+4. AN INDIRECT QUOTATION IS STORED AS A NEGATIVE RATE
+   TCURR holds GBP->EUR = -0.85000, meaning 1 EUR = 0.85 GBP (quoted the other way round).
+   1,000.00 GBP = 1176.47 EUR   per-unit rate 1.17647   <- row 2017-04-01 indirect 0.85000 (1:1)
+   OB08 shows the same row as 'indirect' 0.85000; the sign is only in the table.
+
+5. A REFERENCE CURRENCY: TWO ROWS COMBINED INTO A CROSS RATE
+   Rate type EURX keeps every rate against EUR, so USD->CHF is (USD->EUR) / (CHF->EUR):
+   1,000.00 USD = 983.96 CHF   rate 0.98396
+   <- via EUR: (row 2017-04-01 rate 0.92000 (1:1)) / (row 2017-04-01 rate 0.93500 (1:1))
+   Maintain n rates against the reference and every one of the n*(n-1) pairs is derived.
+
+6. THE RATE ON THE DOCUMENT IS FROZEN THERE: BKPF-KURSF
+   Posting 100 USD to a JPY company code on 2017-04-25: rate 110.00000, 11000 JPY.
+   BKPF-KURSF stores 110.00000; changing OB08 tomorrow changes nothing on this document.
+   A user may also type a rate. If it deviates from the table by more than the maximum
+   exchange rate deviation per company code (OB64) the system warns, but posts.
+   typed rate 120.00000 vs table 110.00000: deviation 9.1%
+
+7. THE SAME 100 USD, SEEN FROM THE CLEARING PAGE OF THIS CHAPTER
+   posted at 1 : 100  ->   10000 JPY
+   cleared at 1 : 110 ->   11000 JPY
+   difference 1000 JPY, which is the whole subject of the SKB1-XSALH page.

@@ -1,0 +1,36 @@
+1. THE OPEN ITEM: 100 USD POSTED TO 414100C AT 1 USD = 100 JPY
+   a. SKB1-XSALH on:
+     1800000200  WAERS USD  WRBTR      100  DMBTR    10000 JPY  PSWSL JPY  PSWBT    10000   (SE16: DMBTR 100.00, PSWBT 100.00)
+   b. SKB1-XSALH off:
+     1800000196  WAERS USD  WRBTR      100  DMBTR    10000 JPY  PSWSL USD  PSWBT      100   (SE16: DMBTR 100.00, PSWBT 100.00)
+   Same document currency, same local amount. The only difference is the pair on the right:
+   with the flag the account remembers a JPY balance, without it a USD balance.
+
+2. PROCESS THE ITEM IN F-03, IN JPY, WHEN THE RATE IS 1 USD = 110 JPY
+   a. flag on:   JPY Gross shown =   10000   DMBTR is not recalculated
+   b. flag off:  JPY Gross shown =   11000   DMBTR is recalculated from 100 USD
+   Case a clears against 10,000 JPY of anything. Case b needs 11,000 JPY, or a difference.
+
+3. HOW THE FLAG CHANGES A CLEARING BETWEEN TWO ITEMS OF THE SAME LOCAL AMOUNT
+   flag off, two items, both 10,000 JPY in DMBTR, one posted in USD and one in JPY:
+     1800000196  WAERS USD  WRBTR     -100  DMBTR   -10000 JPY  PSWSL USD  PSWBT     -100   (SE16: DMBTR -100.00, PSWBT -100.00)
+     1800000201  WAERS JPY  WRBTR    10000  DMBTR    10000 JPY  PSWSL JPY  PSWBT    10000   (SE16: DMBTR 100.00, PSWBT 100.00)
+   net amounts at the clearing rate:  1800000196  -11000 JPY   1800000201   10000 JPY
+   balance in JPY = -1000  -> the items cannot be cleared as they stand.
+   Options: 'Charge off diff.' or a residual item of 1000 JPY, and the system posts an
+   exchange rate difference of 1000 JPY to the account in OBA1 (transaction KDF).
+
+   flag on for both items:
+   net amounts:  -10000 and   10000  balance 0 -> cleared with no difference line at all.
+
+4. T001-XSLTA: 'NO FOREX RATE DIFF. WHEN CLEARING IN LC' (OBY6)
+   flag off, XSLTA set, clearing entered in JPY: 1800000196 keeps its DMBTR, balance 0.
+   The company code indicator switches the recalculation off for clearings done in local
+   currency; the account keeps its USD balance and no difference is posted.
+
+5. THE SAME NUMBERS SEEN AS BALANCES OF 414100C IN UPDATE CURRENCY
+   flag off: JPY    10000   USD     -100
+   flag on : JPY        0
+   With the flag off the account has a USD bucket and a JPY bucket, and clearing the
+   two items against each other has to bring BOTH to zero -- which is why a clearing
+   document can contain lines nobody entered.

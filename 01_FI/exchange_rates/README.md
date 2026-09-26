@@ -22,3 +22,7 @@ Everything else on these pages follows from that:
 ## And one thing to check before maintaining any rate
 
 Look at the **rate type**, not just the rate table. If the rate type has a reference currency, the entries that count are *currency → reference currency*. A carefully maintained direct pair is not read, saves without complaint, and changes nothing.
+
+## See also
+
+The currency chapter puts these three pages in context: [Exchange rates](../../03_Currency/exchange_rates/README.md) there covers rate types, quotation, ratios and the full search order with a program, and the rest of [Currencies in SAP](../../03_Currency/README.md) follows the rate into the line item, the clearing, the valuation and the Universal Journal.

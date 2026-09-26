@@ -52,13 +52,15 @@ FIXUPS = {
     "Sd": "SD",
     "Rv": "RV",
     "Fec": "FEC",
+    "Pswsl": "PSWSL",
+    "Abap": "ABAP",
 }
 
 # Reading order per folder, keyed by folder path relative to the repo root.
 # A folder's README.md is pinned first regardless (navigation.indexes requires
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
-    ".": ["01_FI", "02_Master_Data"],
+    ".": ["01_FI", "02_Master_Data", "03_Currency"],
     "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates", "posting_keys"],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
@@ -81,6 +83,31 @@ NAV_ORDER: dict[str, list[str]] = {
         "document_types_and_number_ranges.md",
         "inbound_interface_numbering.md",
         "case_inbound_ar_interface.md",
+    ],
+    # Four movements: the objects (keys, types, local currencies, rates); one
+    # line item in the G/L and the fourth currency it carries; the whole system
+    # (Universal Journal, ledgers, UPA, CO, ML, group); the practical side.
+    "03_Currency": [
+        "currency_keys_and_decimals",
+        "currency_types",
+        "local_and_parallel_currencies",
+        "exchange_rates",
+        "update_currency_pswsl",
+        "only_balances_in_local_currency",
+        "exchange_rate_differences_on_clearing",
+        "foreign_currency_valuation",
+        "universal_journal_currencies",
+        "ledgers_and_currencies",
+        "universal_parallel_accounting",
+        "controlling_currencies",
+        "material_ledger_currencies",
+        "group_currency_and_translation",
+        "rounding_and_amount_fields",
+        "abap_currency_handling",
+        "payments_and_currency_management",
+        "reporting_and_troubleshooting",
+        "introducing_and_changing_currencies",
+        "resources",
     ],
 }
 

@@ -1,0 +1,43 @@
+1. SCENARIO 1: ACCOUNT MANAGED IN LOCAL CURRENCY ONLY (SKB1-XSALH = 'X')
+   post 120 USD = 100 EUR to 31010:
+     account  WAERS  WRBTR      HWAER  DMBTR      PSWSL  PSWBT      -> TSL (balance)   HSL
+     31010    USD       120.00  EUR       100.00  EUR       100.00  ->    100.00 EUR     100.00 EUR
+   The update currency is EUR: the balance of 31010 is kept in EUR only, and TSL = HSL.
+
+2. SCENARIO 2: THE SAME POSTING, FLAG OFF (BALANCES PER CURRENCY)
+   post 120 USD = 100 EUR to 31010:
+     account  WAERS  WRBTR      HWAER  DMBTR      PSWSL  PSWBT      -> TSL (balance)   HSL
+     31010    USD       120.00  EUR       100.00  USD       120.00  ->    120.00 USD     100.00 EUR
+   Now the balance of 31010 has a USD bucket: FS10N / FAGLB03 show 120 USD and 100 EUR.
+
+3. SCENARIO 3: A CLEARING INHERITS THE UPDATE CURRENCY OF THE ITEM IT CLEARS
+   invoice in EUR, then a payment document in USD that clears it:
+     account  WAERS  WRBTR      HWAER  DMBTR      PSWSL  PSWBT      -> TSL (balance)   HSL
+     31010    EUR      -100.00  EUR      -100.00  EUR      -100.00  ->   -100.00 EUR    -100.00 EUR
+     31010    USD       120.00  EUR       100.00  EUR       100.00  ->    100.00 EUR     100.00 EUR
+   balance of 31010 in update currency EUR: 0.00   USD bucket: none
+   The payment line says PSWSL = EUR although its document currency is USD. That is
+   normal: an open-item account's balance must be zero per update currency once its
+   items are cleared, so the clearing line is booked in the *cleared* item's currency.
+
+4. THE SAME TEST DECIDES THE EXCHANGE RATE DIFFERENCE LINE (FORM KDFTAB_ABARBEITEN)
+   IF skb1-xsalh = space.  bseg-pswsl = kdbtab-waers.  bseg-pswbt = bseg-wrbtr.
+   ELSE.                   bseg-pswsl = t001-waers.    bseg-pswbt = bseg-dmbtr.
+   kdbtab-waers is the document currency of the ITEM BEING CLEARED, not of the clearing.
+   A USD item is cleared by a USD payment at a worse rate; the difference line is
+   -9.60 USD = -8.00 EUR on account KDF01:
+     KDF01 with XSALH =  :  PSWSL USD  PSWBT -9.60
+     KDF01 with XSALH = X:  PSWSL EUR  PSWBT -8.00
+
+5. WHY FS10N AND FBL3N CAN SEEM TO DISAGREE
+   FS10N / FAGLB03, currency filter 'EUR', reads TSL per update currency:
+     31010 EUR: 0.00
+   Drill down and the list contains a document whose *document* currency is USD.
+   FBL3N, filtered on document currency USD, shows that same line as 120.00 USD.
+   Neither is wrong: one is keyed by PSWSL, the other by WAERS.
+
+6. WHERE THE PAIR ENDS UP IN EACH GENERATION OF THE GENERAL LEDGER
+   classic G/L   GLT0-TSL      = PSWBT      GLT0-HSL      = DMBTR
+   new G/L       FAGLFLEXT-TSL = PSWBT      FAGLFLEXT-HSL = DMBTR    (RTCUR = PSWSL, RWCUR = WAERS)
+   S/4HANA       ACDOCA-TSL    = PSWBT      ACDOCA-HSL    = DMBTR    (WSL = WRBTR is the document currency)
+   TSL is 'amount in balance transaction currency': the currency the balance is kept in.

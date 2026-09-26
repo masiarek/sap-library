@@ -1,0 +1,59 @@
+1. THE CONFIGURATION: WHICH CURRENCY TYPE OWNS WHICH FIELD (tx FINSC_LEDGER, ledger 0L, CoCd 1010)
+   type  field  key  converted from  in BSEG as
+   00    WSL    JPY  (document currency itself)  WRBTR
+   10    HSL    EUR  type 00              DMBTR
+   30    KSL    USD  type 10              DMBE2
+   40    OSL    CHF  type 10              DMBE3
+   Z1    VSL    GBP  type 10              -- (ACDOCA only)
+   TSL is not configured: it is derived per line (the update currency, see PSWSL).
+
+2. CONVERT EVERY LINE INTO EVERY FIELD, ROUNDING EACH LINE
+   account     WSL JPY            TSL    HSL EUR    KSL USD    OSL CHF    VSL GBP
+   400000      1234567    1234567 JPY   10333.33   11235.43   10164.90    8838.10
+   154000       123457    1033.34 EUR    1033.34    1123.55    1016.50     883.82
+   160000     -1358024   -1358024 JPY  -11366.66  -12358.97  -11181.38   -9721.90
+   sum               0                      0.01       0.01       0.02       0.02
+   balanced in WSL; not balanced in HSL, KSL, OSL, VSL: rounding each line leaves a cent or two.
+
+3. BALANCE ZERO PER JOURNAL ENTRY: THE DIFFERENCE IS ADJUSTED ON ONE LINE
+   The accounting interface moves each field's rounding difference onto one line item
+   (this program takes the last one) so that every field nets to zero. No extra line,
+   no extra account: a line's HSL may differ by a cent from its own converted amount.
+     HSL: line 160000 -11366.66 -> -11366.67   (adjusted by -0.01)
+     KSL: line 160000 -12358.97 -> -12358.98   (adjusted by -0.01)
+     OSL: line 160000 -11181.38 -> -11181.40   (adjusted by -0.02)
+     VSL: line 160000 -9721.90 -> -9721.92   (adjusted by -0.02)
+   sums now: WSL 0  HSL 0.00  KSL 0.00  OSL 0.00  VSL 0.00
+
+4. TSL DOES NOT HAVE TO BALANCE PER ENTRY, ONLY PER ACCOUNT AND CURRENCY OVER TIME
+   TSL by currency in this entry: JPY -123457, EUR 1033.34
+   The tax account has XSALH set, so its balance is kept in EUR while the other two
+   lines keep JPY; TSL mixes currencies within one entry by design.
+
+5. WHAT REACHES BSEG, AND WHAT DOES NOT
+   field  currency key field  BSEG
+   WSL    RWCUR               WRBTR / WAERS (header)
+   TSL    RTCUR               PSWBT / PSWSL
+   HSL    RHCUR               DMBTR
+   KSL    RKCUR               DMBE2
+   OSL    ROCUR               DMBE3
+   VSL    RVCUR               -- not in BSEG
+   BSEG has room for three parallel currencies and will not be extended; the Z1 amount
+   in GBP is visible in FB03L, FAGLB03, FAGLL03H and the Fiori apps, not in FBL3N.
+
+6. WHICH PROCESSES CONVERT WITH HISTORICAL RATES (X) AND WHICH FALL BACK (1..4), note 2344012, UPA off
+   process                                  10 30 40 Z1
+   Realtime currency conversion             X  X  X  X
+   Balance zero per journal entry           X  X  X  X
+   Open item management (AP, AR, GL)        X  X  X  X
+   Foreign currency valuation               X  X  X  X
+   GL allocations                           X  X  X  X
+   Regrouping                               X  X  X  1
+   Fixed asset accounting                   X  X  X  1
+   Material ledger                          X  X  X  1
+   CO allocations                           X  X  4  4
+   CO settlement                            X  X  2  2
+   CO reposting                             X  X  1  1
+   1 = converted at the current rate as a fallback; 2 = all currencies since 2020 if set in
+   the settlement profile; 4 = accurate if the field is in the cycle. With Universal
+   Parallel Accounting (2022+) every cell is X.

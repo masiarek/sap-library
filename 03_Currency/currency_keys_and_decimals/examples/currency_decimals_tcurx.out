@@ -1,0 +1,52 @@
+1. A CURRENCY KEY IS A ROW IN TCURC; ITS DECIMALS ARE A ROW IN TCURX
+   key    ISO   decimals   source of the decimals
+   EUR    EUR      2       default (not in TCURX)
+   USD    USD      2       default (not in TCURX)
+   JPY    JPY      0       TCURX
+   KWD    KWD      3       TCURX
+   CLP    CLP      0       TCURX
+   USDN   USD      5       TCURX
+   Two decimals is not stored anywhere: it is what a missing TCURX row means.
+
+2. THE DATABASE HOLDS EVERY AMOUNT WITH TWO DECIMALS, SHIFTED
+   what the user entered        what BSEG-WRBTR holds      shift
+                1,000 JPY   ->          10.00        x 10^-2
+                1.500 KWD   ->          15.00        x 10^1
+             1,234.56 EUR   ->        1234.56        none
+              250,000 CLP   ->        2500.00        x 10^-2
+             0.12345 USDN   ->         123.45        x 10^3
+   1,000 JPY and 10.00 EUR are the same bytes in the amount column. Only the
+   currency key beside it tells them apart.
+
+3. THE SHIFT IS REVERSIBLE, AND EVERY OUTPUT HAS TO REVERSE IT
+        10.00 + JPY   ->          1,000 JPY   round trip ok
+        15.00 + KWD   ->          1.500 KWD   round trip ok
+      1234.56 + EUR   ->       1,234.56 EUR   round trip ok
+      2500.00 + CLP   ->        250,000 CLP   round trip ok
+       123.45 + USDN  ->       0.12345 USDN   round trip ok
+
+4. THE CLASSIC BUG: READ THE COLUMN, FORGET THE KEY
+   SE16 on BSEG shows WRBTR = 10.00 for a 1,000 JPY item, and that is correct.
+   A report that prints the field as a plain number says  10.00
+   A report that applies the key says                    1,000 JPY
+   A report that 'fixes' it by multiplying every JPY row by 100 and then
+   also prints WITH the key says                          100,000 JPY
+   All three are plausible numbers. Only one of them is the invoice.
+
+5. THE SAME SHIFT, SEEN ON THE SOURCE DOCUMENT'S SCREENSHOT
+   Company code Z013 has local currency JPY. A 100 USD document at 1 USD = 100 JPY
+   is 100.00 USD = 10,000 JPY.  In the raw BSEG display it appears as:
+     WRBTR (document currency, USD) = 100.00
+     DMBTR (local currency, JPY)    = 100.00
+   Both columns read 100,00 on the screen, and the JPY one means ten thousand.
+
+6. YOU CANNOT ADD A COLUMN OF STORED AMOUNTS ACROSS CURRENCIES
+   rows:  1,000 JPY, 10.00 EUR, 1.500 KWD
+   sum of the stored values = 35.00   (three currencies, one meaningless number)
+   Every SAP total is per currency key, or converted into one currency first.
+
+7. TWO BAPIs THAT EXIST BECAUSE OF THIS TABLE
+   BAPI_CURRENCY_CONV_TO_INTERNAL  external -> stored   (what a screen field feeds to the DB)
+   BAPI_CURRENCY_CONV_TO_EXTERNAL  stored -> external   (what an interface must call before sending)
+   BAPI_CURRENCY_GETDECIMALS       the TCURX lookup on its own
+   e.g. CONV_TO_EXTERNAL(15.00, KWD) = 1.500 KWD;  CONV_TO_INTERNAL(1,000 JPY) = 10.00
