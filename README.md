@@ -17,6 +17,7 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 | [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates · posting keys |
 | [02_Master_Data — Master data](02_Master_Data/README.md) | Addresses: the postal code check per country |
 | [03_Currency — Currencies in SAP](03_Currency/README.md) | Keys and decimals · currency types · parallel currencies · exchange rates · the update currency · valuation · the Universal Journal, ledgers and UPA · CO, ML and group currency · ABAP · payments · troubleshooting |
+| [04_Integration — One table, three ways out](04_Integration/README.md) | The Gateway Service Builder · `API_BUSINESS_PARTNER` · registering a service in the hub · a lookup done end to end · where-used of a table · CDS view annotations and the delta · a custom view · `RFC_READ_TABLE` · resources |
 
 ### Payments, clearing and intercompany
 
@@ -50,6 +51,14 @@ A chapter of twenty pages in four movements, with seven small programs that repr
 2. **One line item in the G/L** — the [update currency, `BSEG-PSWSL` and `PSWBT`](03_Currency/update_currency_pswsl/README.md), the indicator [*only balances in local currency*](03_Currency/only_balances_in_local_currency/README.md) with one open item cleared at two rates, [exchange rate differences on clearing](03_Currency/exchange_rate_differences_on_clearing/README.md), [foreign currency valuation and translation](03_Currency/foreign_currency_valuation/README.md).
 3. **The whole system** — [currencies in the Universal Journal](03_Currency/universal_journal_currencies/README.md) and the SAP Note 2344012 process matrix, [ledgers and `FINSC_LEDGER`](03_Currency/ledgers_and_currencies/README.md), [Universal Parallel Accounting](03_Currency/universal_parallel_accounting/README.md), [Controlling](03_Currency/controlling_currencies/README.md), the [Material Ledger](03_Currency/material_ledger_currencies/README.md), [group currency and translation](03_Currency/group_currency_and_translation/README.md).
 4. **The practical side** — [rounding and the amount field](03_Currency/rounding_and_amount_fields/README.md), [currencies in ABAP](03_Currency/abap_currency_handling/README.md), [payments and currency management](03_Currency/payments_and_currency_management/README.md), [reporting and troubleshooting](03_Currency/reporting_and_troubleshooting/README.md), [introducing, changing and retiring currencies](03_Currency/introducing_and_changing_currencies/README.md), and the [resources](03_Currency/resources/README.md): SAP Notes, help pages, book chapters and articles.
+
+### Integration
+
+A chapter of nine pages that follows one table, `BUT0ID`, the identification numbers of a business partner, along the three ways data leaves S/4HANA; the map is [Integration](04_Integration/README.md).
+
+1. **The OData path** — [the Gateway Service Builder](04_Integration/service_builder_segw/README.md) (the model is the source, the classes are generated, and a program derives the names, `$metadata` and the methods), [`API_BUSINESS_PARTNER`](04_Integration/api_business_partner/README.md) set by set, [registering a service in the hub](04_Integration/registering_a_service_in_the_hub/README.md) (the `Z` name and the external name), and [finding a partner by its UCM number](04_Integration/finding_a_partner_by_identification/README.md), a knowledge transfer in six steps.
+2. **The CDS path** — [where-used of a table](04_Integration/where_used_of_a_table/README.md) (fourteen hits read by prefix), [CDS view annotations](04_Integration/cds_view_annotations/README.md) (`I_BuPaIdentification` line by line, with a program for the change-data-capture delta), and [a custom view on `BUT0ID`](04_Integration/custom_extraction_view/README.md) beside the delivered one.
+3. **The RFC path** — [`RFC_READ_TABLE`](04_Integration/rfc_read_table/README.md): the field catalogue, the 512-character row and the 72-character clause, with a program for all three; and the [resources](04_Integration/resources/README.md): books, courses, documentation and specifications, graded by how sure the page is of each.
 
 ### Addresses
 
