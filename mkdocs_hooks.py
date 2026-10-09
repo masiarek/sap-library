@@ -53,14 +53,21 @@ FIXUPS = {
     "Rv": "RV",
     "Fec": "FEC",
     "Pswsl": "PSWSL",
-    "Abap": "ABAP",
+    "Segw": "SEGW",
+    "Odata": "OData",
+    "Api": "API",
+    "Rfc": "RFC",
+    "Ucm": "UCM",
+    "By": "by",
+    "Its": "its",
+    "On": "on",
 }
 
 # Reading order per folder, keyed by folder path relative to the repo root.
 # A folder's README.md is pinned first regardless (navigation.indexes requires
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
-    ".": ["01_FI", "02_Master_Data", "03_Currency"],
+    ".": ["01_FI", "02_Master_Data", "03_Currency", "04_Integration"],
     "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates", "posting_keys"],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
@@ -107,6 +114,20 @@ NAV_ORDER: dict[str, list[str]] = {
         "payments_and_currency_management",
         "reporting_and_troubleshooting",
         "introducing_and_changing_currencies",
+        "resources",
+    ],
+    # One table, three ways out: the OData path (builder, the delivered service,
+    # the hub, the lookup done end to end), the CDS path (where-used, the
+    # delivered view, the custom one), the RFC path, and the reading list.
+    "04_Integration": [
+        "service_builder_segw",
+        "api_business_partner",
+        "registering_a_service_in_the_hub",
+        "finding_a_partner_by_identification",
+        "where_used_of_a_table",
+        "cds_view_annotations",
+        "custom_extraction_view",
+        "rfc_read_table",
         "resources",
     ],
 }

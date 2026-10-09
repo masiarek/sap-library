@@ -1,0 +1,28 @@
+initial load: a full extraction, every row of the view
+   ('0017100001', 'HCM001', '00001234')  name='Kowalski Sp. z o.o.'
+   ('0017100001', 'ZNIP', '5261040828')  name='Kowalski Sp. z o.o.'
+   ('0017100002', 'ZNIP', '7010001234')  name='Nowak S.A.'
+
+a day of changes:
+   insert BUT0ID (0017100002, ZPESEL, 85050512345)
+   update BUT000 0017100001: new name
+   delete BUT0ID (0017100001, HCM001, 00001234)
+   change log: [('BUT0ID', 'I', ('0017100002', 'ZPESEL', '85050512345')), ('BUT000', 'U', ('0017100001',)), ('BUT0ID', 'D', ('0017100001', 'HCM001', '00001234'))]
+
+delta extraction with the mapping: only the view rows the log names
+   D  ('0017100001', 'HCM001', '00001234')  (delete image: keys only, the row is gone)
+   U  ('0017100001', 'ZNIP', '5261040828')  name='Kowalski i Wspolnicy Sp. z o.o.' country='PL'
+   I  ('0017100002', 'ZPESEL', '85050512345')  name='Nowak S.A.' country='PL'
+   the BUT000 update produced one delta row per identification of that partner,
+   because the mapping says BUT000 joins to-one on BusinessPartner; the deleted
+   identification is sent as a delete image, which a full load could never express
+
+a view without the mapping (the custom view on BUT0ID): full extraction, again
+   ('0017100001', 'ZNIP', '5261040828')  name='Kowalski i Wspolnicy Sp. z o.o.'
+   ('0017100002', 'ZNIP', '7010001234')  name='Nowak S.A.'
+   ('0017100002', 'ZPESEL', '85050512345')  name='Nowak S.A.'
+   the consumer gets every row and has to find the changes itself; a deleted row
+   is simply absent, and nothing says which one
+
+a second delta run with nothing logged:
+    empty: the extractor has nothing to send

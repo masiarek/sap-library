@@ -1,0 +1,200 @@
+
+1. The names the generation dialog proposes
+===========================================
+project ZBP_IDNUMBERS, class prefix ZCL_
+   model provider class  (MPC)      ZCL_ZBP_IDNUMBERS_MPC             
+   its extension         (MPC_EXT)  ZCL_ZBP_IDNUMBERS_MPC_EXT         
+   data provider class   (DPC)      ZCL_ZBP_IDNUMBERS_DPC             
+   its extension         (DPC_EXT)  ZCL_ZBP_IDNUMBERS_DPC_EXT         
+   technical model name             ZBP_IDNUMBERS_MDL                 
+   technical service name           ZBP_IDNUMBERS_SRV                 
+
+project API_BUSINESS_PARTNER, class prefix CL_
+   model provider class  (MPC)      CL_API_BUSINESS_PARTNER_MPC       
+   its extension         (MPC_EXT)  CL_API_BUSINESS_PARTNER_MPC_EXT      <- 31 characters: too long, choose a name by hand
+   data provider class   (DPC)      CL_API_BUSINESS_PARTNER_DPC       
+   its extension         (DPC_EXT)  CL_API_BUSINESS_PARTNER_DPC_EXT      <- 31 characters: too long, choose a name by hand
+   technical model name             API_BUSINESS_PARTNER_MDL          
+   technical service name           API_BUSINESS_PARTNER_SRV          
+
+project GWSAMPLE_BASIC, class prefix /IWBEP/CL_
+   model provider class  (MPC)      /IWBEP/CL_GWSAMPLE_BASIC_MPC      
+   its extension         (MPC_EXT)  /IWBEP/CL_GWSAMPLE_BASIC_MPC_EXT     <- 32 characters: too long, choose a name by hand
+   data provider class   (DPC)      /IWBEP/CL_GWSAMPLE_BASIC_DPC      
+   its extension         (DPC_EXT)  /IWBEP/CL_GWSAMPLE_BASIC_DPC_EXT     <- 32 characters: too long, choose a name by hand
+   technical model name             GWSAMPLE_BASIC_MDL                
+   technical service name           GWSAMPLE_BASIC_SRV                
+
+service document, once the service is registered in the hub: /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/
+$metadata:                                                   /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/$metadata
+
+2. From the Dictionary field to the EDM property
+================================================
+entity type BusinessPartner (entity set BusinessPartnerSet), keys: BusinessPartner
+   BUT000-PARTNER           CHAR 10    -> Edm.String    Nullable=false MaxLength=10
+   BusinessPartnerName      CHAR 80    -> Edm.String    MaxLength=80
+   BUT000-CRDAT             DATS       -> Edm.DateTime  Precision=0 sap:display-format=Date
+   BUT000-CRTIM             TIMS       -> Edm.Time      Precision=0
+   BUT000-XBLCK             CHAR 1     -> Edm.Boolean     (chosen in the model, not the default)
+entity type BPIdentification (entity set BPIdentificationSet), keys: BusinessPartner, BPIdentificationType, BPIdentificationNumber
+   BUT0ID-PARTNER           CHAR 10    -> Edm.String    Nullable=false MaxLength=10
+   BUT0ID-TYPE              CHAR 6     -> Edm.String    Nullable=false MaxLength=6
+   BUT0ID-IDNUMBER          CHAR 60    -> Edm.String    Nullable=false MaxLength=60
+   BUT0ID-VALID_DATE_FROM   DATS       -> Edm.DateTime  Precision=0 sap:display-format=Date
+   BUT0ID-VALID_DATE_TO     DATS       -> Edm.DateTime  Precision=0 sap:display-format=Date
+   BUT0ID-COUNTRY           CHAR 3     -> Edm.String    MaxLength=3
+
+the same rule for the amount and quantity types, which this model does not have:
+   VBAP-POSNR               NUMC 6     -> Edm.String    MaxLength=6
+   VBAP-NETWR               CURR 15,2  -> Edm.Decimal   Precision=15 Scale=2 sap:unit=Currency
+   VBAP-WAERK               CUKY 5     -> Edm.String    MaxLength=5
+   VBAP-KWMENG              QUAN 15,3  -> Edm.Decimal   Precision=15 Scale=3 sap:unit=Unit
+   VBAP-VRKME               UNIT 3     -> Edm.String    MaxLength=3
+   BUT000-PARTNER_GUID      RAW 16     -> Edm.Binary    
+
+3. The $metadata document the model provider class answers with
+===============================================================
+<edmx:Edmx Version="1.0">
+  <edmx:DataServices m:DataServiceVersion="2.0">
+    <Schema Namespace="ZBP_IDNUMBERS_SRV" xml:lang="en" sap:schema-version="1">
+      <EntityType Name="BusinessPartner" sap:content-version="1">
+        <Key><PropertyRef Name="BusinessPartner"/></Key>
+        <Property Name="BusinessPartner" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="BusinessPartnerName" Type="Edm.String" MaxLength="80"/>
+        <Property Name="CreationDate" Type="Edm.DateTime" Precision="0" sap:display-format="Date"/>
+        <Property Name="CreationTime" Type="Edm.Time" Precision="0"/>
+        <Property Name="IsBlocked" Type="Edm.Boolean"/>
+        <NavigationProperty Name="to_BPIdentification" Relationship="ZBP_IDNUMBERS_SRV.Assoc_BusinessPartner_BPIdentification" FromRole="FromRole_Assoc_BusinessPartner_BPIdentification" ToRole="ToRole_Assoc_BusinessPartner_BPIdentification"/>
+      </EntityType>
+      <EntityType Name="BPIdentification" sap:content-version="1">
+        <Key><PropertyRef Name="BusinessPartner"/><PropertyRef Name="BPIdentificationType"/><PropertyRef Name="BPIdentificationNumber"/></Key>
+        <Property Name="BusinessPartner" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="BPIdentificationType" Type="Edm.String" Nullable="false" MaxLength="6"/>
+        <Property Name="BPIdentificationNumber" Type="Edm.String" Nullable="false" MaxLength="60"/>
+        <Property Name="ValidityStartDate" Type="Edm.DateTime" Precision="0" sap:display-format="Date"/>
+        <Property Name="ValidityEndDate" Type="Edm.DateTime" Precision="0" sap:display-format="Date"/>
+        <Property Name="Country" Type="Edm.String" MaxLength="3"/>
+      </EntityType>
+      <Association Name="Assoc_BusinessPartner_BPIdentification" sap:content-version="1">
+        <End Type="ZBP_IDNUMBERS_SRV.BusinessPartner" Multiplicity="1" Role="FromRole_Assoc_BusinessPartner_BPIdentification"/>
+        <End Type="ZBP_IDNUMBERS_SRV.BPIdentification" Multiplicity="*" Role="ToRole_Assoc_BusinessPartner_BPIdentification"/>
+        <ReferentialConstraint>
+          <Principal Role="FromRole_Assoc_BusinessPartner_BPIdentification"><PropertyRef Name="BusinessPartner"/></Principal>
+          <Dependent Role="ToRole_Assoc_BusinessPartner_BPIdentification"><PropertyRef Name="BusinessPartner"/></Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <EntityContainer Name="ZBP_IDNUMBERS_SRV_Entities" m:IsDefaultEntityContainer="true">
+        <EntitySet Name="BusinessPartnerSet" EntityType="ZBP_IDNUMBERS_SRV.BusinessPartner" sap:creatable="true" sap:updatable="true" sap:deletable="false" sap:pageable="true" sap:addressable="true"/>
+        <EntitySet Name="BPIdentificationSet" EntityType="ZBP_IDNUMBERS_SRV.BPIdentification" sap:creatable="true" sap:updatable="true" sap:deletable="true" sap:pageable="true" sap:addressable="true"/>
+        <AssociationSet Name="Assoc_BusinessPartner_BPIdentification_AssocSet" Association="ZBP_IDNUMBERS_SRV.Assoc_BusinessPartner_BPIdentification">
+          <End EntitySet="BusinessPartnerSet" Role="FromRole_Assoc_BusinessPartner_BPIdentification"/>
+          <End EntitySet="BPIdentificationSet" Role="ToRole_Assoc_BusinessPartner_BPIdentification"/>
+        </AssociationSet>
+        <FunctionImport Name="CheckIdentification" ReturnType="ZBP_IDNUMBERS_SRV.BPIdentification" EntitySet="BPIdentificationSet" m:HttpMethod="GET">
+          <Parameter Name="BusinessPartner" Type="Edm.String" Mode="In"/>
+          <Parameter Name="BPIdentificationType" Type="Edm.String" Mode="In"/>
+        </FunctionImport>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
+
+4. The classes the generator writes
+===================================
+ZCL_ZBP_IDNUMBERS_MPC: one DEFINE method that builds the model above, and for each entity type
+   TS_BUSINESSPARTNER          a structure with one component per property
+   TT_BUSINESSPARTNER          a table of it, what GET_ENTITYSET returns
+   TS_BPIDENTIFICATION         a structure with one component per property
+   TT_BPIDENTIFICATION         a table of it, what GET_ENTITYSET returns
+ZCL_ZBP_IDNUMBERS_DPC: 10 methods, one per entity set and operation, each generated as
+   RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc ... (method not implemented)
+   BUSINESSPARTNERSET_GET_ENTITYSET
+   BUSINESSPARTNERSET_GET_ENTITY
+   BUSINESSPARTNERSET_CREATE_ENTITY
+   BUSINESSPARTNERSET_UPDATE_ENTITY
+   BUSINESSPARTNERSET_DELETE_ENTITY
+   BPIDENTIFICATIONSET_GET_ENTITYSET
+   BPIDENTIFICATIONSET_GET_ENTITY
+   BPIDENTIFICATIONSET_CREATE_ENTITY
+   BPIDENTIFICATIONSET_UPDATE_ENTITY
+   BPIDENTIFICATIONSET_DELETE_ENTITY
+   plus the interface methods the generated class inherits and dispatches to these:
+   /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET, ~GET_ENTITY, ~CREATE_ENTITY, ~UPDATE_ENTITY,
+   ~DELETE_ENTITY, ~EXECUTE_ACTION, ~GET_EXPANDED_ENTITY, ~GET_EXPANDED_ENTITYSET,
+   ~CHANGESET_BEGIN, ~CHANGESET_PROCESS, ~CHANGESET_END, ~GET_STREAM, ~CREATE_STREAM ...
+
+an entity set called BusinessPartnerIdentificationSet would need the method
+   BUSINESSPARTNERIDENTIFICATIONSET_GET_ENTITYSET  (46 characters, limit 30)
+   so the generator has to shorten it; which letters it drops is a thing to read in your system,
+   not to assume. Entity set names of 16 characters or fewer never meet the limit.
+
+5. Which method a request reaches, and what the framework hands it
+==================================================================
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/$metadata
+   answered from the model provider class: no data provider method runs
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BusinessPartnerSet
+   BUSINESSPARTNERSET_GET_ENTITYSET
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BusinessPartnerSet('17100001')
+   BUSINESSPARTNERSET_GET_ENTITY
+      it_key_tab: BusinessPartner=17100001
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BusinessPartnerSet('17100001')/to_BPIdentification
+   BPIDENTIFICATIONSET_GET_ENTITYSET
+      the source keys of the navigation path: BusinessPartner=17100001
+      it_navigation_path: BusinessPartnerSet -> to_BPIdentification; your method of the target set runs
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BusinessPartnerSet('17100001')?$expand=to_BPIdentification
+   BUSINESSPARTNERSET_GET_ENTITY
+      it_key_tab: BusinessPartner=17100001
+      $expand=to_BPIdentification: the framework then calls BPIDENTIFICATIONSET_GET_ENTITYSET once per entity returned,
+      unless GET_EXPANDED_ENTITY / GET_EXPANDED_ENTITYSET is redefined to return the deep structure in one go
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BPIdentificationSet?$filter=BusinessPartner eq '17100001' and Country eq 'PL'&$top=10&$skip=20&$orderby=ValidityStartDate desc&$select=BPIdentificationType,BPIdentificationNumber&$inlinecount=allpages
+   BPIDENTIFICATIONSET_GET_ENTITYSET
+      it_filter_select_options: BusinessPartner: SIGN=I OPTION=EQ LOW=17100001; Country: SIGN=I OPTION=EQ LOW=PL
+      applied by: your method, or nobody
+      is_paging: top=10, skip=20   applied by: your method, or nobody
+      it_order: ValidityStartDate desc   applied by: your method, or nobody
+      $inlinecount=allpages: your method fills es_response_context-inlinecount, or the count is missing
+      $select=BPIdentificationType,BPIdentificationNumber: applied by the framework when it serialises what you returned
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BPIdentificationSet/$count
+   BPIDENTIFICATIONSET_GET_ENTITYSET
+      $count: your GET_ENTITYSET runs, the framework counts what it returns
+
+POST /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BPIdentificationSet
+   BPIDENTIFICATIONSET_CREATE_ENTITY
+
+PUT /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BPIdentificationSet(BusinessPartner='17100001',BPIdentificationType='ZPESEL',BPIdentificationNumber='90010112345')
+   BPIDENTIFICATIONSET_UPDATE_ENTITY
+      it_key_tab: BusinessPartner=17100001, BPIdentificationType=ZPESEL, BPIdentificationNumber=90010112345
+
+DELETE /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/BPIdentificationSet(BusinessPartner='17100001',BPIdentificationType='ZPESEL',BPIdentificationNumber='90010112345')
+   BPIDENTIFICATIONSET_DELETE_ENTITY
+      it_key_tab: BusinessPartner=17100001, BPIdentificationType=ZPESEL, BPIdentificationNumber=90010112345
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/CheckIdentification?BusinessPartner='17100001'&BPIdentificationType='ZPESEL'
+   /IWBEP/IF_MGW_APPL_SRV_RUNTIME~EXECUTE_ACTION with iv_action_name = CheckIdentification
+      parameters: BusinessPartner=17100001, BPIdentificationType=ZPESEL
+
+GET /sap/opu/odata/sap/ZBP_IDNUMBERS_SRV/PartnerSet
+   no such entity set in the model: the framework answers with an error before any method
+
+
+6. Generating again: what survives
+==================================
+generation 1: DPC has 10 methods; the developer redefines in DPC_EXT:
+    BUSINESSPARTNERSET_GET_ENTITY
+    BPIDENTIFICATIONSET_GET_ENTITYSET
+
+the model changes: BPIdentificationSet is renamed BPIdentificationNumberSet,
+BPIdentificationTypeSet is added, and the project is generated again
+
+generation 2: DPC rewritten with 15 methods:
+   10 new, 5 gone, 5 unchanged
+   DPC_EXT: not touched by the generator, still holds the 2 redefinitions
+   BUSINESSPARTNERSET_GET_ENTITY            still redefines a method of the superclass: fine
+   BPIDENTIFICATIONSET_GET_ENTITYSET        redefines a method the superclass no longer has:
+                                            DPC_EXT does not activate until this redefinition is renamed or deleted

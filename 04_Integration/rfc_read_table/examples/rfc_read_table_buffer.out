@@ -1,0 +1,43 @@
+1. FIELDS on return: the catalogue of BUT0ID, all fields
+   FIELDNAME         OFFSET  LENGTH  TYPE
+   CLIENT                 0       3  C
+   PARTNER                3      10  C
+   TYPE                  13       6  C
+   IDNUMBER              19      60  C
+   INSTITUTE             79      40  C
+   ENTRY_DATE           119       8  D
+   COUNTRY              127       3  C
+   REGION               130       3  C
+   VALID_DATE_FROM      133       8  D
+   VALID_DATE_TO        141       8  D
+   row width 149 characters: fits in the 512-character buffer
+
+2. DATA without a delimiter: fixed positions, cut with FIELDS-OFFSET and FIELDS-LENGTH
+   |0017100001ZPESEL90010112345                                                 99991231|
+   |0017100001HCM00100001234                                                    00000000|
+   |0017100002ZNIP  5261040828                                                  99991231|
+   catalogue for this call: PARTNER@0+10, TYPE@10+6, IDNUMBER@16+60, VALID_DATE_TO@76+8
+
+3. The same with DELIMITER = '|': the offsets in FIELDS still describe the undelimited row
+   0017100001|ZPESEL|90010112345                                                 |99991231
+   0017100001|HCM001|00001234                                                    |00000000
+   0017100002|ZNIP  |5261040828                                                  |99991231
+
+4. Paging with ROWSKIPS and ROWCOUNT, on a SELECT with no ORDER BY
+   ROWSKIPS=1 ROWCOUNT=1 -> ['0017100001|HCM001']
+   the page is only stable if the database returns the rows in the same order every time;
+   GET_SORTED asks for a sort by primary key, and without it two pages can overlap or miss a row
+
+5. NO_DATA = 'X': the catalogue comes back, DATA stays empty
+   DATA: []
+
+6. OPTIONS: the WHERE clause as 72-character lines, broken only where a space is
+   line 1 (67 chars): PARTNER = '0017100001' AND TYPE IN ('ZPESEL', 'ZNIP', 'HCM001') AND
+   line 2 (46 chars): VALID_DATE_TO >= '20260101' AND COUNTRY = 'PL'
+   the lines are concatenated with a space before the SELECT; a quoted value cut across two lines
+   is a different value, and a keyword cut in two raises OPTION_NOT_VALID
+
+7. DATA_BUFFER_EXCEEDED: a wide table, all fields at once
+   DATA_BUFFER_EXCEEDED: the row would be 540 characters, the buffer holds 512
+   the way out is the FIELDS table: ask for fewer fields per call, and join the calls by key
+   ['TEXT01', 'TEXT02', 'TEXT03', 'TEXT04', 'TEXT05'] -> 300 characters: fits
