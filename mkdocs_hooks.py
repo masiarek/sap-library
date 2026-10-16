@@ -45,6 +45,7 @@ FIXUPS = {
     "Ic": "IC",
     "Sap": "SAP",
     "Abap": "ABAP",
+    "Obr1": "OBR1",
     "Idoc": "IDoc",
     "Bapi": "BAPI",
     "Cds": "CDS",
@@ -68,7 +69,13 @@ FIXUPS = {
 # the index at children[0]).
 NAV_ORDER: dict[str, list[str]] = {
     ".": ["01_FI", "02_Master_Data", "03_Currency", "04_Integration"],
-    "01_FI": ["payments", "document_types_and_number_ranges", "exchange_rates", "posting_keys"],
+    "01_FI": [
+        "payments",
+        "document_types_and_number_ranges",
+        "exchange_rates",
+        "posting_keys",
+        "resetting_transaction_data",
+    ],
     "01_FI/payments": [
         "f110_debit_vs_credit.md",
         "intercompany_settlement_worked_example.md",
@@ -81,6 +88,9 @@ NAV_ORDER: dict[str, list[str]] = {
     ],
     "01_FI/posting_keys": [
         "comparing_posting_keys_between_clients.md",
+    ],
+    "01_FI/resetting_transaction_data": [
+        "obr1_after_a_production_copy.md",
     ],
     "02_Master_Data": ["addresses"],
     "02_Master_Data/addresses": [

@@ -32,6 +32,12 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 | :-- | :-- |
 | [Comparing posting keys between clients](posting_keys/comparing_posting_keys_between_clients.md) | Where `OB41` stores a posting key and why its field status is two character strings; `SCMP` and a download against a read-only report that lists Business Area, Profit Center and Segment as required / optional / suppressed per posting key, looking the positions up itself; and what else decides whether the field is required. |
 
+## [Resetting transaction data](resetting_transaction_data/README.md)
+
+| Page | What it answers |
+| :-- | :-- |
+| [OBR1 after a production copy](resetting_transaction_data/obr1_after_a_production_copy.md) | Whether `OBR1` still works in S/4HANA, the five gates a copy of production meets (productive flag, controlling area, untouched logistics, no date selection, volume), and what to do instead for each goal behind "reset FI in the target". |
+
 ## Recurring themes across these pages
 
 - **The subledger sign is data, not logic.** `BSEG-SHKZG` is set by the posting key when the document is posted. Programs read it; they don't derive it.
@@ -40,4 +46,5 @@ Pages on FI proper: the subledgers, what posts into them, the numbering that ide
 - **"Clearing job" is ambiguous.** F110 moves cash; F.13 only matches. Half the confusing questions in this area come from the two being called the same thing.
 - **Existence is checked, currency is not.** The rate lookup takes the latest entry on or before the translation date and never asks how old it is. A late monthly load, or a test system with one ancient rate, produces documents — just not the ones you expected.
 - **A posting key is a row per client, and its field status is a string.** `TBSL` carries the client in its key, and the suppressed/required/optional choices live as one character per field in `FAUS1`/`FAUS2`. A table comparison sees the string as one field; only decoding a position says whether the profit center is what changed.
+- **A reset is for a company code that never went live.** `OBR1` deletes FI documents and nothing the rest of the system remembers about them; on a copy of production the clean test client is built without the history, not emptied of it.
 - **Intercompany doubles everything.** Two books, two documents, one economic fact. Most intercompany pain is the cost of keeping those two views equal.
