@@ -14,7 +14,7 @@ Published as a searchable site: **<https://masiarek.github.io/sap-library/>**
 
 | Area | What's in it |
 | :-- | :-- |
-| [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates · posting keys |
+| [01_FI — Financial Accounting](01_FI/README.md) | Payments and clearing · document types and number ranges · exchange rates · posting keys · resetting transaction data |
 | [02_Master_Data — Master data](02_Master_Data/README.md) | Addresses: the postal code check per country |
 | [03_Currency — Currencies in SAP](03_Currency/README.md) | Keys and decimals · currency types · parallel currencies · exchange rates · the update currency · valuation · the Universal Journal, ledgers and UPA · CO, ML and group currency · ABAP · payments · troubleshooting |
 | [04_Integration — One table, three ways out](04_Integration/README.md) | The Gateway Service Builder · `API_BUSINESS_PARTNER` · registering a service in the hub · a lookup done end to end · where-used of a table · CDS view annotations and the delta · a custom view · `RFC_READ_TABLE` · resources |
@@ -42,6 +42,10 @@ A three-page sequence, in reading order:
 ### Posting keys
 
 - [Comparing posting keys between clients](01_FI/posting_keys/comparing_posting_keys_between_clients.md) — `OB41` is one row of `TBSL` per client, and the field status is two strings with one character per field; `SCMP` says *that* the string differs, and only decoding a position says whether it is the profit center. Three routes compared, a read-only report that lists Business Area, Profit Center and Segment as required / optional / suppressed per posting key and looks their positions up in the field-selection definition itself, and the other three inputs that decide whether Profit Center and Business Area are required.
+
+### Resetting transaction data
+
+- [OBR1 after a production copy](01_FI/resetting_transaction_data/obr1_after_a_production_copy.md) — `OBR1` still runs in S/4HANA on premise and deletes `ACDOCA` lines too, but on a copy of production it meets the productive flag `T001-XPROD`, deletes CO data per controlling area, leaves purchasing, sales and inventory behind without their accounting side, and has no date selection. What to do instead for each goal: a Customizing-only client copy, a masking tool, a reduced copy, company code deletion, archiving.
 
 ### Currencies
 
